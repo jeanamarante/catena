@@ -597,14 +597,10 @@ $descriptor.value = function () {
     var call = traceCallFromErrorStack(0).split('.');
     var message = '';
 
-    // If only two levels deep, then assume it is being called from a constructor or directly.
-    if (names.length === 1) {
-        // If module names do not match then abstract is being invoked outside of module.
-        if (call[0] !== this.$name) {
-            message = 'Cannot invoke abstract directly.';
-        } else {
-            message = 'Cannot invoke abstract in constructor.';
-        }
+    // If only the module is being referred, then assume it is being
+    // called from a constructor or directly.
+    if (call.length === 1) {
+        message = 'Cannot invoke abstract directly from instance or in constructor.';
 
     // Otherwise just print method name that has been flagged as abstract.
     } else {
