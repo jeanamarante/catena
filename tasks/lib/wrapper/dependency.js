@@ -594,7 +594,7 @@ Object.defineProperty($classProto.prototype, 'super', $descriptor);
  */
 
 $descriptor.value = function () {
-    var call = traceLastCall(0).split('.');
+    var call = traceCallFromErrorStack(0).split('.');
     var message = '';
 
     // If only two levels deep, then assume it is being called from a constructor or directly.
