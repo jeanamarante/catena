@@ -594,7 +594,7 @@ Object.defineProperty($classProto.prototype, 'super', $descriptor);
  */
 
 $descriptor.value = function () {
-    var call = traceCallFromErrorStack(0).split('.');
+    var call = traceCallFromErrorStack(1).split('.');
     var message = '';
 
     // If only the module is being referred, then assume it is being
@@ -720,9 +720,6 @@ const traceCallFromErrorStack = function (index) {
     }
 
     var stack = traceErrorStack(false);
-
-    // Access stack in reverse order.
-    index = (stack.length - 1) - index;
 
     // Return empty string if out of bounds.
     return stack[index] !== undefined ? stack[index] : '';
