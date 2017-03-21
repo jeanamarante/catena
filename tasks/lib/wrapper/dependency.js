@@ -628,15 +628,21 @@ Object.defineProperty($classProto.prototype, 'throwError', $descriptor);
 /**
  * Validate data type.
  *
+ * @function isNull
  * @function isArray
  * @function isObject
  * @function isNumber
  * @function isString
  * @function isBoolean
  * @function isFunction
+ * @function isUndefined
  * @return Boolean
  * @api public
  */
+
+const isNull = function (arg) {
+    return arg == null;
+};
 
 const isArray = function (arg) {
     return Array.isArray(arg);
@@ -660,6 +666,10 @@ const isBoolean = function (arg) {
 
 const isFunction = function (arg) {
     return typeof arg === 'function';
+};
+
+const isUndefined = function (arg) {
+    return arg === undefined;
 };
 
 /**
