@@ -43,8 +43,7 @@ window.addEventListener('load', function (e) {
     $appendSingles = undefined;
     $defineSingleProperties = undefined;
     $freezeModules = undefined;
-    $checkConstProperty = undefined;
-    $freezeConst = undefined;
+    $freezeConstObject = undefined;
     $freezeConstArray = undefined;
 
     new CLASS.Main();
