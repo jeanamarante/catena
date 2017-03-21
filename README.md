@@ -129,7 +129,7 @@ CLASS.Child.append = {
 
 #### CONST
 
-Constants used inside the app should be declared here. Properties declared inside CONST cannot be changed after the Main module is initialized. CONST properties cannot be objects or functions. Arrays are valid, but putting an object or function inside of them will throw an error too.
+Constants used inside the app should be declared here. Properties declared inside CONST cannot be changed after the Main module is initialized. Nested objects and arrays are recursively frozen too.
 
 ```js
 CONST.GRAVITY = 9.8;
@@ -333,7 +333,7 @@ Useful functions that catena uses internally that are exposed for you to use.
 
 &nbsp;
 
-##### isArray,&nbsp; isObject,&nbsp; isNumber,&nbsp; isString,&nbsp; isBoolean,&nbsp; isFunction
+##### isNaN,&nbsp; isNull,&nbsp; isArray,&nbsp; isObject,&nbsp; isNumber,&nbsp; isString,&nbsp; isBoolean,&nbsp; isFunction,&nbsp; isUndefined
 
 Collection of functions for data type checking.
 
