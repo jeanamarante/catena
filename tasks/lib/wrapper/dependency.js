@@ -422,7 +422,7 @@ var $defineSingleProperties = function (name, module) {
 var $freezeModules = function () {
     if (!$development) { return undefined; }
 
-    $freezeConst();
+    $freezeConstObject(CONST);
 
     Object.freeze(_$_);
     Object.freeze(CLASS);
@@ -430,63 +430,46 @@ var $freezeModules = function () {
 };
 
 /**
- * CONST properties cannot point to neither objects nor functions.
- *
- * @function checkConstProperty
- * @param {String} name
- * @param {*} value
- * @api internal
- */
-
-var $checkConstProperty = function (name, value) {
-    if (isObject(value)) {
-        throwError(name + ' cannot be [Object].', 'CONST', '');
-    } else if (isFunction(value)) {
-        throwError(name + ' cannot be [Function].', 'CONST', '');
-    }
-};
-
-/**
  * Freeze all properties inside CONST.
  *
- * @function freezeConst
+ * @function freezeConstObject
+ * @param {Object} obj 
  * @api internal
  */
 
-var $freezeConst = function () {
-    var keys = Object.keys(CONST);
+var $freezeConstObject = function (obj) {
+    var keys = Object.keys(obj);
 
     for (var i = 0, max = keys.length; i < max; i++) {
         var name = keys[i];
-        var value = CONST[name];
+        var value = obj[name];
 
-        $checkConstProperty(name, value);
-
-        if (isArray(value)) {
-            $freezeConstArray(name, value);
+        if (isObject(value)) {
+            $freezeConstObject(value);
+        } else if (isArray(value)) {
+            $freezeConstArray(value);
         }
     }
 
-    Object.freeze(CONST);
+    Object.freeze(obj);
 };
 
 /**
  * Recursively freeze all indexes in the array.
  *
  * @function freezeConstArray
- * @param {String} name
  * @param {Array} arr
  * @api internal
  */
 
-var $freezeConstArray = function (name, arr) {
+var $freezeConstArray = function (arr) {
     for (var i = 0, max = arr.length; i < max; i++) {
         var value = arr[i];
 
-        $checkConstProperty(name, value);
-
-        if (isArray(value)) {
-            $freezeConstArray(name, value);
+        if (isObject(value)) {
+            $freezeConstObject(value);
+        } else if (isArray(value)) {
+            $freezeConstArray(value);
         }
     }
 
