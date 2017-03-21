@@ -611,6 +611,7 @@ Object.defineProperty($classProto.prototype, 'throwError', $descriptor);
 /**
  * Validate data type.
  *
+ * @function isNaN
  * @function isNull
  * @function isArray
  * @function isObject
@@ -622,6 +623,10 @@ Object.defineProperty($classProto.prototype, 'throwError', $descriptor);
  * @return Boolean
  * @api public
  */
+
+const isNaN = function (arg) {
+    return Number.isNaN(arg);
+};
 
 const isNull = function (arg) {
     return arg == null;
