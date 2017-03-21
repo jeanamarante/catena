@@ -629,7 +629,7 @@ const isNaN = function (arg) {
 };
 
 const isNull = function (arg) {
-    return arg == null;
+    return arg === null;
 };
 
 const isArray = function (arg) {
