@@ -619,6 +619,7 @@ Object.defineProperty($classProto.prototype, 'throwError', $descriptor);
  * @function isString
  * @function isBoolean
  * @function isFunction
+ * @function isInstance
  * @function isUndefined
  * @return Boolean
  * @api public
@@ -654,6 +655,10 @@ const isBoolean = function (arg) {
 
 const isFunction = function (arg) {
     return typeof arg === 'function';
+};
+
+const isInstance = function (type, arg) {
+    return arg instanceof type;
 };
 
 const isUndefined = function (arg) {
