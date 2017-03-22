@@ -333,8 +333,13 @@ Useful functions that catena uses internally that are exposed for you to use.
 
 &nbsp;
 
-##### isNaN,&nbsp; isNull,&nbsp; isArray,&nbsp; isObject,&nbsp; isNumber,&nbsp; isString,&nbsp; isBoolean,&nbsp; isFunction,&nbsp; isUndefined
+##### isNaN,&nbsp; isNull,&nbsp; isArray,&nbsp; isObject,&nbsp; isNumber,&nbsp; isString,&nbsp; isBoolean,&nbsp; isFunction,&nbsp; isInstance,&nbsp; isUndefined
 
 Collection of functions for data type checking.
 
 _isArray(arg: *);_
+
+isInstance is unique compared to the other functions as it requires two arguments instead of one.
+
+_isInstance(type: *, arg: *);_
+_isInstance(CLASS.Shape, new CLASS.Triangle());_
