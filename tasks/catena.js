@@ -11,12 +11,11 @@ var isDeploying = false;
  *
  * @function writeDevFile
  * @param {Object} grunt
- * @param {Array} args
  * @return {String}
  * @api private
  */
 
-function writeDevFile (grunt, args) {
+function writeDevFile (grunt) {
     var filePath = path.join(tmpDir, 'dev.js');
 
     // Set $development to false if isDeploying is true.
@@ -28,26 +27,25 @@ function writeDevFile (grunt, args) {
 /**
  * @function buildFileList
  * @param {Object} grunt
- * @param {Array} args
- * @param {Object} data
+ * @param {Object} task
  * @api private
  */
 
-function buildFileList (grunt, args, data) {
+function buildFileList (grunt, task) {
     var files = [];
 
     // Start wrap.
     files.push(path.join(wrapperDir, 'init.js'));
-    files.push(writeDevFile(grunt, args));
+    files.push(writeDevFile(grunt));
     files.push(path.join(wrapperDir, 'dependency.js'));
 
     // All files in src directory.
-    files.push(path.join(data.src, '**/*.js'));
+    files.push(path.join(task.data.src, '**/*.js'));
 
     // End wrap.
     files.push(path.join(wrapperDir, 'final.js'));
 
-    concat(grunt, args, data, files);
+    concat(grunt, task, files);
 }
 
 /**
@@ -55,25 +53,24 @@ function buildFileList (grunt, args, data) {
  *
  * @function concat
  * @param {Object} grunt
- * @param {Array} args
- * @param {Object} data
+ * @param {Object} task
  * @param {Array} files
  * @api private
  */
 
-function concat (grunt, args, data, files) {
+function concat (grunt, task, files) {
     if (!grunt.task.exists('concat')) {
         grunt.loadNpmTasks('grunt-contrib-concat');
     }
 
     grunt.config('concat.catena', {
         src: files,
-        dest: data.dest
+        dest: task.data.dest
     });
 
     grunt.task.run('concat:catena');
 
-    watch(grunt, args, data);
+    watch(grunt, task);
 }
 
 /**
@@ -81,21 +78,20 @@ function concat (grunt, args, data, files) {
  *
  * @function watch
  * @param {Object} grunt
- * @param {Array} args
- * @param {Object} data
+ * @param {Object} task
  * @api private
  */
 
-function watch (grunt, args, data) {
+function watch (grunt, task) {
     // The deploy and with_watch will arguments prevent watch from being called again.
-    if (!data.watch || withWatch || isDeploying) { return undefined; }
+    if (!Boolean(task.data.watch) || withWatch || isDeploying) { return undefined; }
 
     if (!grunt.task.exists('watch')) {
         grunt.loadNpmTasks('grunt-contrib-watch');
     }
 
     grunt.config('watch.catena', {
-        files: path.join(data.src, '**/*.js'),
+        files: path.join(task.data.src, '**/*.js'),
         tasks: ['catena:with_watch'],
         options: {
             spawn: false,
@@ -111,6 +107,6 @@ module.exports = function (grunt) {
         withWatch = this.args.indexOf('with_watch') !== -1;
         isDeploying = this.args.indexOf('deploy') !== -1;
 
-        buildFileList(grunt, this.args, grunt.config.get('catena'));
+        buildFileList(grunt, this);
     });
 };
