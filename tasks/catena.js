@@ -25,6 +25,27 @@ function writeDevFile (grunt) {
 }
 
 /**
+ * Only Javascript is allowed to be added into files list.
+ *
+ * @function isInvalidFile
+ * @param {String} file
+ * @param {Object} stats
+ * @return {Boolean}
+ * @api private
+ */
+
+function isInvalidFile (file, stats) {
+    // Do not block access to sub directories.
+    if (stats.isDirectory()) {
+        return false;
+    } else if (path.extname(file) === '.js') {
+        return false;
+    } else {
+        return true;
+    }
+}
+
+/**
  * @function buildFileList
  * @param {Object} grunt
  * @param {Object} task
@@ -32,6 +53,8 @@ function writeDevFile (grunt) {
  */
 
 function buildFileList (grunt, task) {
+    // recursive-readdir is asynchronous.
+    var done = task.async();
     var files = [];
 
     // Start wrap.
@@ -39,13 +62,18 @@ function buildFileList (grunt, task) {
     files.push(writeDevFile(grunt));
     files.push(path.join(wrapperDir, 'dependency.js'));
 
-    // All files in src directory.
-    files.push(path.join(task.data.src, '**/*.js'));
+    require('recursive-readdir')(task.data.src, [isInvalidFile], function (err, srcFiles) {
+        // Finish recursive-addir.
+        done();
 
-    // End wrap.
-    files.push(path.join(wrapperDir, 'final.js'));
+        // All Javascript files in src directory.
+        files = files.concat(srcFiles);
 
-    concat(grunt, task, files);
+        // End wrap.
+        files.push(path.join(wrapperDir, 'final.js'));
+
+        concat(grunt, task, files);
+    });
 }
 
 /**
@@ -106,6 +134,9 @@ module.exports = function (grunt) {
     grunt.registerTask('catena', function () {
         withWatch = this.args.indexOf('with_watch') !== -1;
         isDeploying = this.args.indexOf('deploy') !== -1;
+
+        // Treat catena as a subtask.
+        this.data = grunt.config.get('catena');
 
         buildFileList(grunt, this);
     });

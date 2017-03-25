@@ -1,7 +1,7 @@
 {
 	"name": "catena",
 	"description": "Wrapper Library for Javascript OOP",
-	"version": "0.8.5",
+	"version": "0.8.6",
 	"author": {
 		"name": "Jean Amarante",
 		"url": "https://github.com/jeanamarante"
@@ -19,6 +19,7 @@
 	},
 	"dependencies": {
 		"grunt": "^0.4.0",
+		"recursive-readdir": "^2.1.0",
 		"grunt-contrib-watch": "^0.6.0",
 		"grunt-contrib-concat": "^0.5.0"
 	},
