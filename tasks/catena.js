@@ -111,7 +111,7 @@ function concat (grunt, task, files) {
  */
 
 function watch (grunt, task) {
-    // The deploy and with_watch will arguments prevent watch from being called again.
+    // No need to run watch if application is being deployed or already being watched.
     if (!Boolean(task.data.watch) || withWatch || isDeploying) { return undefined; }
 
     if (!grunt.task.exists('watch')) {
