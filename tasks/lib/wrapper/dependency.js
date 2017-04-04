@@ -251,7 +251,7 @@ var $appendClass = function (parentName, childName) {
 
     // Assume that the parent of the child module is the CLASS object if
     // parentName is an empty string.
-    var parent = parentName === '' ? $classProto : CLASS[parentName];
+    var parent = isEmptyString(parentName) ? $classProto : CLASS[parentName];
 
     $linkClassPrototypes(parent, child);
     $defineClassProperties(parentName, childName, child);
@@ -508,7 +508,7 @@ $descriptor.value = (function () {
     function checkChain () {
         // If nodeName is an empty string, then start the chain from the
         // parent of the root child.
-        if (nodeName === '') {
+        if (isEmptyString(nodeName)) {
             nodeName = this.$parentName;
 
             // Even though super might be invoked in different constructors,
@@ -546,7 +546,7 @@ $descriptor.value = (function () {
      */
 
     function applyNode (args) {
-        if (nodeName === '') { return undefined; }
+        if (isEmptyString(nodeName)) { return undefined; }
 
         var nextParent = CLASS[nodeName].prototype.$parentName;
 
@@ -554,7 +554,7 @@ $descriptor.value = (function () {
         var temp = nodeName;
 
         // If there are no more parent nodes then reset chain.
-        if (nextParent === '') {
+        if (isEmptyString(nextParent)) {
             resetChain();
         }
 
@@ -641,7 +641,7 @@ const isArray = function (arg) {
 };
 
 const isObject = function (arg) {
-    return arg !== null && !Array.isArray(arg) && typeof arg === 'object';
+    return arg !== null && !isArray(arg) && typeof arg === 'object';
 };
 
 const isNumber = function (arg) {
