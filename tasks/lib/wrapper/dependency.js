@@ -433,7 +433,7 @@ var $freezeModules = function () {
  * Freeze all properties inside CONST.
  *
  * @function freezeConstObject
- * @param {Object} obj 
+ * @param {Object} obj
  * @api internal
  */
 
@@ -621,6 +621,9 @@ Object.defineProperty($classProto.prototype, 'throwError', $descriptor);
  * @function isFunction
  * @function isInstance
  * @function isUndefined
+ * @function isEmptyArray
+ * @function isEmptyString
+ * @param {*} arg
  * @return Boolean
  * @api public
  */
@@ -663,6 +666,14 @@ const isInstance = function (type, arg) {
 
 const isUndefined = function (arg) {
     return arg === undefined;
+};
+
+const isEmptyArray = function (arg) {
+    return isArray(arg) && arg.length === 0;
+};
+
+const isEmptyString = function (arg) {
+    return arg === '';
 };
 
 /**
