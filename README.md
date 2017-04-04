@@ -329,11 +329,9 @@ $solveDependencies = function () {};
 
 #### Utility Functions
 
-Useful functions that catena uses internally that are exposed for you to use.
+Useful functions catena uses internally that are exposed for you to use.
 
-&nbsp;
-
-##### isNaN,&nbsp; isNull,&nbsp; isArray,&nbsp; isObject,&nbsp; isNumber,&nbsp; isString,&nbsp; isBoolean,&nbsp; isFunction,&nbsp; isInstance,&nbsp; isUndefined
+##### isNaN,&nbsp; isNull,&nbsp; isArray,&nbsp; isObject,&nbsp; isNumber,&nbsp; isString,&nbsp; isBoolean,&nbsp; isFunction,&nbsp; isInstance,&nbsp; isUndefined,&nbsp; isEmptyArray,&nbsp; isEmptyString
 
 Collection of functions for data type checking.
 
