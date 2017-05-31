@@ -30,7 +30,7 @@ var $hierarchy = {
         var arr = this.children[parentName];
 
         // If parent has not been referenced, create new array.
-        if (arr === undefined) {
+        if (isUndefined(arr)) {
             this.children[parentName] = [childName];
         } else {
             arr.push(childName);
@@ -46,7 +46,7 @@ var $hierarchy = {
      */
 
     hasParent: function (childName) {
-        return this.parents[childName] !== undefined;
+        return !isUndefined(this.parents[childName]);
     },
 
     /**
@@ -56,7 +56,7 @@ var $hierarchy = {
      */
 
     hasChildren: function (parentName) {
-        return this.children[parentName] !== undefined;
+        return !isUndefined(this.children[parentName]);
     },
 
     /**
@@ -127,7 +127,7 @@ var $wrapMain = function () {
         var instance = null;
 
         return function () {
-            if (instance !== null) {
+            if (!isNull(instance)) {
                 throwError('Cannot instantiate Main more than once.', 'MAIN');
             } else {
                 instance = new Main();
@@ -161,7 +161,7 @@ var $checkClasses = function () {
  */
 
 var $checkMain = function () {
-    if (CLASS.Main === undefined) {
+    if (isUndefined(CLASS.Main)) {
         throwError('Main does not exist.', 'MAIN');
     }
 };
@@ -180,8 +180,8 @@ var $checkClassLinks = function () {
         var childName = children[i];
         var parentName = $hierarchy.getParent(childName);
 
-        var childExists = CLASS[childName] !== undefined;
-        var parentExists = CLASS[parentName] !== undefined;
+        var childExists = !isUndefined(CLASS[childName]);
+        var parentExists = !isUndefined(CLASS[parentName]);
 
         if (!parentExists && !childExists) {
             throwError(parentName + ' and ' + childName + ' do not exist.', 'EXTEND');
@@ -365,7 +365,7 @@ var $checkSingleStructures = function () {
         }
 
         // init must be a function.
-        if (module.init !== undefined && !isFunction(module.init)) {
+        if (!isUndefined(module.init) && !isFunction(module.init)) {
             throwError('init method in ' + name + ' must be [Function].', 'SINGLE');
         }
     }
@@ -387,7 +387,7 @@ var $appendSingles = function () {
 
         $defineSingleProperties(name, module);
 
-        if (module.init !== undefined) {
+        if (!isUndefined(module.init)) {
             module.init();
         }
     }
@@ -736,7 +736,7 @@ const traceCallFromErrorStack = function (index) {
     var stack = traceErrorStack(false);
 
     // Return empty string if out of bounds.
-    return stack[index] !== undefined ? stack[index] : '';
+    return !isUndefined(stack[index]) ? stack[index] : '';
 };
 
 /**
@@ -752,7 +752,7 @@ const throwError = function (message, type) {
     message = isString(message) ? message : '';
 
     // Default to ERROR if not a string or empty string.
-    type = isString(type) && type !== '' ? type : 'ERROR';
+    type = isString(type) && !isEmptyString(type) ? type : 'ERROR';
 
     // type is wrapped around curly brackets and uppercase.
     type = '{ ' + type.toUpperCase() + ' } ';
