@@ -389,6 +389,9 @@ var $appendSingles = function () {
 
         if (!isUndefined(module.init)) {
             module.init();
+
+            // Make init method unreachable after being invoked.
+            module.init = undefined;
         }
     }
 };
