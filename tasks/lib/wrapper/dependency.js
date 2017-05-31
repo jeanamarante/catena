@@ -609,6 +609,8 @@ Object.defineProperty($rootClassProto.prototype, 'abstract', $descriptor);
  */
 
 $descriptor.value = function (message, type, index) {
+    index = clampErrorStackIndex(index);
+
     // Increment index by one to ignore this method in error stack.
     throwError(message, type, index + 1);
 };
@@ -684,6 +686,19 @@ const isEmptyString = function (arg) {
 };
 
 /**
+ * Return positive integer. Clamp between 0 and Infinity.
+ *
+ * @function clampErrorStackIndex
+ * @param {Number} index
+ * @return {Number}
+ * @api public
+ */
+
+const clampErrorStackIndex = function (index) {
+    return isNumber(index) && index >= 0 ? Math.floor(index) : 0;
+};
+
+/**
  * Return clean call stack with CLASS and SINGLE methods.
  *
  * @function traceErrorStack
@@ -734,11 +749,7 @@ const traceErrorStack = function (log) {
  */
 
 const traceCallFromErrorStack = function (index) {
-    if (!isNumber(index) || index < 0) {
-        index = 0;
-    } else {
-        index = Math.floor(index);
-    }
+    index = clampErrorStackIndex(index);
 
     var stack = traceErrorStack(false);
 
