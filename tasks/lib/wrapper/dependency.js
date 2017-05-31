@@ -740,7 +740,7 @@ const traceErrorStack = function (log) {
 };
 
 /**
- * Get index in error stack.
+ * Get call in error stack.
  *
  * @function traceCallFromErrorStack
  * @param {Number} index
