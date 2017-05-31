@@ -604,11 +604,13 @@ Object.defineProperty($rootClassProto.prototype, 'abstract', $descriptor);
  * @function throwError
  * @param {String} message
  * @param {String} type
+ * @param {Number} index
  * @api public
  */
 
-$descriptor.value = function (message, type) {
-    throwError(message, type);
+$descriptor.value = function (message, type, index) {
+    // Increment index by one to ignore this method in error stack.
+    throwError(message, type, index + 1);
 };
 
 Object.defineProperty($rootClassProto.prototype, 'throwError', $descriptor);
