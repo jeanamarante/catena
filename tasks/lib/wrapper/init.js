@@ -22,7 +22,7 @@ window.addEventListener('load', function (e) {
     // Internal objects and values.
     $development = undefined;
     $loading = undefined;
-    $classProto = undefined;
+    $rootClassProto = undefined;
     $descriptor = undefined;
     $hierarchy = undefined;
 
