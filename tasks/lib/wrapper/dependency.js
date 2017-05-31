@@ -761,7 +761,7 @@ const throwError = function (message, type, index) {
     // Default to ERROR if not a string or empty string.
     type = isString(type) && !isEmptyString(type) ? type : 'ERROR';
 
-    // type is wrapped around curly brackets and uppercase.
+    // type is wrapped around curly brackets and is uppercase.
     type = '{ ' + type.toUpperCase() + ' } ';
 
     var call = traceCallFromErrorStack(index);
