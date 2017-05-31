@@ -586,16 +586,16 @@ $descriptor.value = function () {
     var call = traceCallFromErrorStack(1).split('.');
     var message = '';
 
-    // abstract can only be invoked by instances of CLASS modules.
-    if (call.length === 1) {
-        message = 'Cannot invoke abstract directly from the prototype chain or inside a constructor.';
-
-    // Otherwise just print method name that has been flagged as abstract.
+    // abstract can only be invoked inside the methods of CLASS module instances.
+    if (this.$name !== call[0]) {
+        message = 'Cannot invoke abstract directly from ' + this.$name + ' instance.';
+    } else if (call.length === 1) {
+        message = 'Cannot invoke abstract inside a constructor.';
     } else {
-        message = call[1] + ' is meant to be overwritten.';
+        message = 'Invoked method is meant to be overwritten.';
     }
 
-    throwError(message, 'ABSTRACT');
+    throwError(message, 'ABSTRACT', 1);
 };
 
 Object.defineProperty($rootClassProto.prototype, 'abstract', $descriptor);
