@@ -751,10 +751,11 @@ const traceCallFromErrorStack = function (index) {
  * @function throwError
  * @param {String} message
  * @param {String} type
+ * @param {Number} index
  * @api public
  */
 
-const throwError = function (message, type) {
+const throwError = function (message, type, index) {
     message = isString(message) ? message : '';
 
     // Default to ERROR if not a string or empty string.
@@ -763,7 +764,7 @@ const throwError = function (message, type) {
     // type is wrapped around curly brackets and uppercase.
     type = '{ ' + type.toUpperCase() + ' } ';
 
-    var call = traceCallFromErrorStack(0);
+    var call = traceCallFromErrorStack(index);
     var calledModule = !isEmptyString(call) ? ' Module: ' + call : '';
 
     throw new Error(type + message + calledModule);
