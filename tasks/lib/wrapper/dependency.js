@@ -521,7 +521,7 @@ $descriptor.value = (function () {
 
             // Prevent instance from having parent properties applied more than once.
             if (this.$applied) {
-                throwError('Cannot invoke super twice for the same instance of ' + this.$name, 'SUPER');
+                throwError('Cannot invoke super more than once for ' + this.$name + ' instance.', 'SUPER');
             } else {
                 descriptor.value = true;
 
