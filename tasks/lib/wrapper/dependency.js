@@ -1,8 +1,9 @@
 // Is catena still loading dependencies?
 var $loading = true;
 
-// Helper methods for CLASS modules.
-var $classProto = { prototype: {} };
+// Helper methods for CLASS modules. All CLASS modules
+// link their prototypes to all the functions declared here.
+var $rootClassProto = { prototype: {} };
 
 // Create reusable descriptor for object properties.
 var $descriptor = {
@@ -249,9 +250,9 @@ var $appendSuperClasses = function () {
 var $appendClass = function (parentName, childName) {
     var child = CLASS[childName];
 
-    // Assume that the parent of the child module is the CLASS object if
-    // parentName is an empty string.
-    var parent = isEmptyString(parentName) ? $classProto : CLASS[parentName];
+    // Link to $rootClassProto if no parentName is provided. An empty
+    // parentName indicates that the child has no declared parent.
+    var parent = isEmptyString(parentName) ? $rootClassProto : CLASS[parentName];
 
     $linkClassPrototypes(parent, child);
     $defineClassProperties(parentName, childName, child);
@@ -406,7 +407,9 @@ var $appendSingles = function () {
  */
 
 var $defineSingleProperties = function (name, module) {
-    $descriptor.value = $classProto.prototype.throwError;
+    // The same error throwing methods used in CLASS modules
+    // can be shared in SINGLE modules.
+    $descriptor.value = $rootClassProto.prototype.throwError;
 
     Object.defineProperty(module, 'throwError', $descriptor);
 
@@ -570,7 +573,7 @@ $descriptor.value = (function () {
     };
 })();
 
-Object.defineProperty($classProto.prototype, 'super', $descriptor);
+Object.defineProperty($rootClassProto.prototype, 'super', $descriptor);
 
 /**
  * Error out program whenever abstract is invoked.
@@ -596,7 +599,7 @@ $descriptor.value = function () {
     throwError(message, 'ABSTRACT');
 };
 
-Object.defineProperty($classProto.prototype, 'abstract', $descriptor);
+Object.defineProperty($rootClassProto.prototype, 'abstract', $descriptor);
 
 /**
  * @function throwError
@@ -609,7 +612,7 @@ $descriptor.value = function (message, type) {
     throwError(message, type);
 };
 
-Object.defineProperty($classProto.prototype, 'throwError', $descriptor);
+Object.defineProperty($rootClassProto.prototype, 'throwError', $descriptor);
 
 /**
  * Validate data type.
