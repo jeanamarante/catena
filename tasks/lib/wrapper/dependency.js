@@ -128,7 +128,7 @@ var $wrapMain = function () {
 
         return function () {
             if (instance !== null) {
-                throwError('Cannot instantiate Main more than once.', 'MAIN', '');
+                throwError('Cannot instantiate Main more than once.', 'MAIN');
             } else {
                 instance = new Main();
 
@@ -162,7 +162,7 @@ var $checkClasses = function () {
 
 var $checkMain = function () {
     if (CLASS.Main === undefined) {
-        throwError('Main does not exist.', 'MAIN', '');
+        throwError('Main does not exist.', 'MAIN');
     }
 };
 
@@ -184,11 +184,11 @@ var $checkClassLinks = function () {
         var parentExists = CLASS[parentName] !== undefined;
 
         if (!parentExists && !childExists) {
-            throwError(parentName + ' and ' + childName + ' do not exist.', 'EXTEND', '');
+            throwError(parentName + ' and ' + childName + ' do not exist.', 'EXTEND');
         } else if (!parentExists) {
-            throwError('Parent ' + parentName + ' does not exist for child ' + childName, 'EXTEND', '');
+            throwError('Parent ' + parentName + ' does not exist for child ' + childName, 'EXTEND');
         } else if (!childExists) {
-            throwError('Child ' + childName + ' does not exist for parent ' + parentName, 'EXTEND', '');
+            throwError('Child ' + childName + ' does not exist for parent ' + parentName, 'EXTEND');
         }
     }
 };
@@ -209,12 +209,12 @@ var $checkClassStructures = function () {
 
         // CLASS modules must point to their constructor function.
         if (!isFunction(module)) {
-            throwError('Invalid constructor.', 'CLASS', name);
+            throwError('Invalid constructor.', 'CLASS');
         }
 
         // append must be an object literal.
         if (!isObject(module.append)) {
-            throwError('Invalid append.', 'CLASS', name);
+            throwError('Invalid append.', 'CLASS');
         }
     }
 };
@@ -361,12 +361,12 @@ var $checkSingleStructures = function () {
 
         // SINGLE modules must be an object literal.
         if (!isObject(module)) {
-            throwError(name + ' must be [Object].', 'SINGLE', '');
+            throwError(name + ' must be [Object].', 'SINGLE');
         }
 
         // init must be a function.
         if (module.init !== undefined && !isFunction(module.init)) {
-            throwError('init method in ' + name + ' must be [Function].', 'SINGLE', '');
+            throwError('init method in ' + name + ' must be [Function].', 'SINGLE');
         }
     }
 };
@@ -518,7 +518,7 @@ $descriptor.value = (function () {
 
             // Prevent instance from having parent properties applied more than once.
             if (this.$applied) {
-                throwError('Cannot invoke super twice for the same instance of ' + this.$name, 'SUPER', '');
+                throwError('Cannot invoke super twice for the same instance of ' + this.$name, 'SUPER');
             } else {
                 descriptor.value = true;
 
@@ -529,7 +529,7 @@ $descriptor.value = (function () {
         } else {
             // Error out if chain is broken.
             if (this.$name !== rootName) {
-                throwError('Chain started by ' + rootName + ' instance is being broken by ' + this.$name + ' instance.', 'SUPER', '');
+                throwError('Chain started by ' + rootName + ' instance is being broken by ' + this.$name + ' instance.', 'SUPER');
             }
 
             nodeName = CLASS[nodeName].prototype.$parentName;
@@ -590,7 +590,7 @@ $descriptor.value = function () {
         message = call[1] + ' is meant to be overwritten.';
     }
 
-    throwError(message, 'ABSTRACT', this.$name);
+    throwError(message, 'ABSTRACT');
 };
 
 Object.defineProperty($classProto.prototype, 'abstract', $descriptor);
@@ -603,7 +603,7 @@ Object.defineProperty($classProto.prototype, 'abstract', $descriptor);
  */
 
 $descriptor.value = function (message, type) {
-    throwError(message, type, traceCallFromErrorStack(0));
+    throwError(message, type);
 };
 
 Object.defineProperty($classProto.prototype, 'throwError', $descriptor);
@@ -745,11 +745,10 @@ const traceCallFromErrorStack = function (index) {
  * @function throwError
  * @param {String} message
  * @param {String} type
- * @param {String} module
  * @api public
  */
 
-const throwError = function (message, type, module) {
+const throwError = function (message, type) {
     message = isString(message) ? message : '';
 
     // Default to ERROR if not a string or empty string.
@@ -758,21 +757,10 @@ const throwError = function (message, type, module) {
     // type is wrapped around curly brackets and uppercase.
     type = '{ ' + type.toUpperCase() + ' } ';
 
-    if (!isString(module)) {
-        var call = traceCallFromErrorStack(0);
+    var call = traceCallFromErrorStack(0);
+    var calledModule = !isEmptyString(call) ? ' Module: ' + call : '';
 
-        if (call !== '') {
-            module = ' Module: ' + call;
-
-        // No need to print ' Module: ' with empty string.
-        } else {
-            module = '';
-        }
-    } else if (module !== '') {
-        module = ' Module: ' + module;
-    }
-
-    throw new Error(type + message + module);
+    throw new Error(type + message + calledModule);
 };
 
 /**
@@ -787,24 +775,24 @@ const throwError = function (message, type, module) {
 const extend = function (parentName, childName) {
     if ($development) {
         if (!$loading) {
-            throwError('Prohibited to invoke extend after Main has been initialized.', 'EXTEND', '');
+            throwError('Prohibited to invoke extend after Main has been initialized.', 'EXTEND');
         }
 
         if (!isString(parentName)) {
-            throwError('parentName must be [String].', 'EXTEND', '');
+            throwError('parentName must be [String].', 'EXTEND');
         }
 
         if (!isString(childName)) {
-            throwError('childName must be [String].', 'EXTEND', '');
+            throwError('childName must be [String].', 'EXTEND');
         }
 
         if (parentName === childName) {
-            throwError('parentName and childName cannot have the same name: ' + parentName , 'EXTEND', '');
+            throwError('parentName and childName cannot have the same name: ' + parentName , 'EXTEND');
         }
 
         // Do not allow child to inherit from more than one parent.
         if ($hierarchy.hasParent(childName)) {
-            throwError(parentName + ' cannot extend, ' + childName  + ' is already extending ' + $hierarchy.getParent(childName), 'EXTEND', '');
+            throwError(parentName + ' cannot extend, ' + childName  + ' is already extending ' + $hierarchy.getParent(childName), 'EXTEND');
         }
     }
 
