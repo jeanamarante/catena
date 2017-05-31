@@ -180,15 +180,15 @@ var $checkClassLinks = function () {
         var childName = children[i];
         var parentName = $hierarchy.getParent(childName);
 
-        var childExists = !isUndefined(CLASS[childName]);
-        var parentExists = !isUndefined(CLASS[parentName]);
+        var childDoesNotExist = isUndefined(CLASS[childName]);
+        var parentDoesNotExist = isUndefined(CLASS[parentName]);
 
-        if (!parentExists && !childExists) {
-            throwError(parentName + ' and ' + childName + ' do not exist.', 'EXTEND');
-        } else if (!parentExists) {
-            throwError('Parent ' + parentName + ' does not exist for child ' + childName, 'EXTEND');
-        } else if (!childExists) {
-            throwError('Child ' + childName + ' does not exist for parent ' + parentName, 'EXTEND');
+        if (parentDoesNotExist && childDoesNotExist) {
+            throwError(parentName + ' and ' + childName + ' modules do not exist.', 'EXTEND');
+        } else if (parentDoesNotExist) {
+            throwError('Parent ' + parentName + ' does not exist for child ' + childName + ' module.', 'EXTEND');
+        } else if (childDoesNotExist) {
+            throwError('Child ' + childName + ' does not exist for parent ' + parentName + ' module.', 'EXTEND');
         }
     }
 };
