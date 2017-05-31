@@ -207,14 +207,14 @@ var $checkClassStructures = function () {
         var name = keys[i];
         var module = CLASS[name];
 
-        // CLASS modules must point to their constructor function.
+        // CLASS modules must point to a constructor function.
         if (!isFunction(module)) {
-            throwError('Invalid constructor.', 'CLASS');
+            throwError(name + ' module has an invalid constructor.', 'CLASS');
         }
 
         // append must be an object literal.
         if (!isObject(module.append)) {
-            throwError('Invalid append.', 'CLASS');
+            throwError(name + ' module has an invalid append.', 'CLASS');
         }
     }
 };
