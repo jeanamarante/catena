@@ -797,21 +797,28 @@ const extend = function (parentName, childName) {
             throwError('Prohibited to invoke extend after Main has been initialized.', 'EXTEND');
         }
 
-        if (!isString(parentName)) {
-            throwError('parentName must be [String].', 'EXTEND');
+        var invalidChild = !isString(childName);
+        var invalidParent = !isString(parentName);
+
+        if (invalidParent && invalidChild) {
+            throwError('parentName and childName must be [String]', 'EXTEND');
         }
 
-        if (!isString(childName)) {
-            throwError('childName must be [String].', 'EXTEND');
+        if (invalidParent) {
+            throwError('parentName for child ' + childName + ' module must be [String].', 'EXTEND');
+        }
+
+        if (invalidChild) {
+            throwError('childName for parent ' + parentName + ' module must be [String].', 'EXTEND');
         }
 
         if (parentName === childName) {
-            throwError('parentName and childName cannot have the same name: ' + parentName , 'EXTEND');
+            throwError('parentName and childName cannot share the same name: ' + parentName , 'EXTEND');
         }
 
         // Do not allow child to inherit from more than one parent.
         if ($hierarchy.hasParent(childName)) {
-            throwError(parentName + ' cannot extend, ' + childName  + ' is already extending ' + $hierarchy.getParent(childName), 'EXTEND');
+            throwError(childName + ' cannot extend ' + parentName + ' as it is already extending the ' + $hierarchy.getParent(childName) + ' module.', 'EXTEND');
         }
     }
 
