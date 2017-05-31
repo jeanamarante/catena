@@ -586,10 +586,9 @@ $descriptor.value = function () {
     var call = traceCallFromErrorStack(1).split('.');
     var message = '';
 
-    // If only the module is being referred, then assume it is being
-    // called from a constructor or directly.
+    // abstract can only be invoked by instances of CLASS modules.
     if (call.length === 1) {
-        message = 'Cannot invoke abstract directly from instance or in constructor.';
+        message = 'Cannot invoke abstract directly from the prototype chain or inside a constructor.';
 
     // Otherwise just print method name that has been flagged as abstract.
     } else {
