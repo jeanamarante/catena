@@ -864,7 +864,7 @@ const isInstance = function (type, arg) {
 };
 
 /**
- * Check data type and error out if data type fails test.
+ * Check data type and error out if data type fails test. Index is optional.
  *
  * @function testArray
  * @function testObject
@@ -874,42 +874,43 @@ const isInstance = function (type, arg) {
  * @function testFunction
  * @param {*} arg
  * @param {String} name
+ * @param {Number} index
  * @api public
  */
 
-const testArray = function (arg, name) {
+const testArray = function (arg, name, index) {
     if (!isArray(arg)) {
-        throwArgumentError(name, 'Array', 0);
+        throwArgumentError(name, 'Array', index);
     }
 };
 
-const testObject = function (arg, name) {
+const testObject = function (arg, name, index) {
     if (!isObject(arg)) {
-        throwArgumentError(name, 'Object', 0);
+        throwArgumentError(name, 'Object', index);
     }
 };
 
-const testNumber = function (arg, name) {
+const testNumber = function (arg, name, index) {
     if (!isNumber(arg)) {
-        throwArgumentError(name, 'Number', 0);
+        throwArgumentError(name, 'Number', index);
     }
 };
 
-const testString = function (arg, name) {
+const testString = function (arg, name, index) {
     if (!isString(arg)) {
-        throwArgumentError(name, 'String', 0);
+        throwArgumentError(name, 'String', index);
     }
 };
 
-const testBoolean = function (arg, name) {
+const testBoolean = function (arg, name, index) {
     if (!isBoolean(arg)) {
-        throwArgumentError(name, 'Boolean', 0);
+        throwArgumentError(name, 'Boolean', index);
     }
 };
 
-const testFunction = function (arg, name) {
+const testFunction = function (arg, name, index) {
     if (!isFunction(arg)) {
-        throwArgumentError(name, 'Function', 0);
+        throwArgumentError(name, 'Function', index);
     }
 };
 
@@ -919,11 +920,12 @@ const testFunction = function (arg, name) {
  * @param {*} arg
  * @param {String} typeName
  * @param {String} name
+ * @param {Number} index
  * @api public
  */
 
-const testInstance = function (type, arg, typeName, name) {
+const testInstance = function (type, arg, typeName, name, index) {
     if (!isInstance(arg, type)) {
-        throwArgumentError(name, typeName, 0);
+        throwArgumentError(name, typeName, index);
     }
 };
