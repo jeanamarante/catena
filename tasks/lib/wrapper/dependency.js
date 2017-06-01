@@ -799,7 +799,6 @@ const extend = function (parentName, childName) {
  * @function isString
  * @function isBoolean
  * @function isFunction
- * @function isInstance
  * @function isUndefined
  * @function isEmptyArray
  * @function isEmptyString
@@ -840,10 +839,6 @@ const isFunction = function (arg) {
     return typeof arg === 'function';
 };
 
-const isInstance = function (type, arg) {
-    return arg instanceof type;
-};
-
 const isUndefined = function (arg) {
     return arg === undefined;
 };
@@ -854,6 +849,18 @@ const isEmptyArray = function (arg) {
 
 const isEmptyString = function (arg) {
     return arg === '';
+};
+
+/**
+ * @function isInstance
+ * @param {*} type
+ * @param {*} arg
+ * @return Boolean
+ * @api public
+ */
+
+const isInstance = function (type, arg) {
+    return arg instanceof type;
 };
 
 /**
@@ -908,14 +915,14 @@ const testFunction = function (arg, name) {
 
 /**
  * @function testInstance
- * @param {*} arg
  * @param {*} type
- * @param {String} name
+ * @param {*} arg
  * @param {String} typeName
+ * @param {String} name
  * @api public
  */
 
-const testInstance = function (arg, type, name, typeName) {
+const testInstance = function (type, arg, typeName, name) {
     if (!isInstance(arg, type)) {
         throwArgumentError(name, typeName, 0);
     }
