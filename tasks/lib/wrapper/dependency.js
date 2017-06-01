@@ -855,3 +855,69 @@ const isEmptyArray = function (arg) {
 const isEmptyString = function (arg) {
     return arg === '';
 };
+
+/**
+ * Check data type and error out if data type fails test.
+ *
+ * @function testArray
+ * @function testObject
+ * @function testNumber
+ * @function testString
+ * @function testBoolean
+ * @function testFunction
+ * @function testInstance
+ * @param {*} arg
+ * @param {String} name
+ * @api public
+ */
+
+const testArray = function (arg, name) {
+    if (!isArray(arg)) {
+        throwArgumentError(name, 'Array', 0);
+    }
+};
+
+const testObject = function (arg, name) {
+    if (!isObject(arg)) {
+        throwArgumentError(name, 'Object', 0);
+    }
+};
+
+const testNumber = function (arg, name) {
+    if (!isNumber(arg)) {
+        throwArgumentError(name, 'Number', 0);
+    }
+};
+
+const testString = function (arg, name) {
+    if (!isString(arg)) {
+        throwArgumentError(name, 'String', 0);
+    }
+};
+
+const testBoolean = function (arg, name) {
+    if (!isBoolean(arg)) {
+        throwArgumentError(name, 'Boolean', 0);
+    }
+};
+
+const testFunction = function (arg, name) {
+    if (!isFunction(arg)) {
+        throwArgumentError(name, 'Function', 0);
+    }
+};
+
+/**
+ * @function testInstance
+ * @param {*} arg
+ * @param {*} type
+ * @param {String} name
+ * @param {String} typeName
+ * @api public
+ */
+
+const testInstance = function (arg, type, name, typeName) {
+    if (!isInstance(arg, type)) {
+        throwArgumentError(name, typeName, 0);
+    }
+};
