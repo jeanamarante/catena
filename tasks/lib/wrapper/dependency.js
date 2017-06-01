@@ -864,7 +864,7 @@ const isInstance = function (type, arg) {
 };
 
 /**
- * Check data type and error out if data type fails test. Index is optional.
+ * Check data type and error out if data type fails test.
  *
  * @function testArray
  * @function testEmptyArray
@@ -877,76 +877,76 @@ const isInstance = function (type, arg) {
  * @function testBoolean
  * @function testFunction
  * @param {*} arg
- * @param {String} name
- * @param {Number} index
+ * @param {String} argName
+ * @param {Number} errorIndex
  * @api public
  */
 
-const testArray = function (arg, name, index) {
+const testArray = function (arg, argName, errorIndex) {
     if (!isArray(arg)) {
-        throwArgumentError(name, 'Array', index);
+        throwArgumentError(argName, 'Array', errorIndex);
     }
 };
 
-const testEmptyArray = function (arg, name, index) {
-    testArray(arg, name, index);
+const testEmptyArray = function (arg, argName, errorIndex) {
+    testArray(arg, argName, errorIndex);
 
     if (!isEmptyArray(arg)) {
-        throwError(name + ' has to be empty array.', 'ARG', index);
+        throwError(argName + ' has to be empty array.', 'ARG', errorIndex);
     }
 };
 
-const testNonEmptyArray = function (arg, name, index) {
-    testArray(arg, name, index);
+const testNonEmptyArray = function (arg, argName, errorIndex) {
+    testArray(arg, argName, errorIndex);
 
     if (isEmptyArray(arg)) {
-        throwError(name + ' cannot be empty array.', 'ARG', index);
+        throwError(argName + ' cannot be empty array.', 'ARG', errorIndex);
     }
 };
 
-const testObject = function (arg, name, index) {
+const testObject = function (arg, argName, errorIndex) {
     if (!isObject(arg)) {
-        throwArgumentError(name, 'Object', index);
+        throwArgumentError(argName, 'Object', errorIndex);
     }
 };
 
-const testNumber = function (arg, name, index) {
+const testNumber = function (arg, argName, errorIndex) {
     if (!isNumber(arg)) {
-        throwArgumentError(name, 'Number', index);
+        throwArgumentError(argName, 'Number', errorIndex);
     }
 };
 
-const testString = function (arg, name, index) {
+const testString = function (arg, argName, errorIndex) {
     if (!isString(arg)) {
-        throwArgumentError(name, 'String', index);
+        throwArgumentError(argName, 'String', errorIndex);
     }
 };
 
-const testEmptyString = function (arg, name, index) {
-    testString(arg, name, index);
+const testEmptyString = function (arg, argName, errorIndex) {
+    testString(arg, argName, errorIndex);
 
     if (!isEmptyString(arg)) {
-        throwError(name + ' has to be empty string.', 'ARG', index);
+        throwError(argName + ' has to be empty string.', 'ARG', errorIndex);
     }
 };
 
-const testNonEmptyString = function (arg, name, index) {
-    testString(arg, name, index);
+const testNonEmptyString = function (arg, argName, errorIndex) {
+    testString(arg, argName, errorIndex);
 
     if (isEmptyString(arg)) {
-        throwError(name + ' cannot be empty string.', 'ARG', index);
+        throwError(argName + ' cannot be empty string.', 'ARG', errorIndex);
     }
 };
 
-const testBoolean = function (arg, name, index) {
+const testBoolean = function (arg, argName, errorIndex) {
     if (!isBoolean(arg)) {
-        throwArgumentError(name, 'Boolean', index);
+        throwArgumentError(argName, 'Boolean', errorIndex);
     }
 };
 
-const testFunction = function (arg, name, index) {
+const testFunction = function (arg, argName, errorIndex) {
     if (!isFunction(arg)) {
-        throwArgumentError(name, 'Function', index);
+        throwArgumentError(argName, 'Function', errorIndex);
     }
 };
 
@@ -955,13 +955,13 @@ const testFunction = function (arg, name, index) {
  * @param {*} type
  * @param {*} arg
  * @param {String} typeName
- * @param {String} name
- * @param {Number} index
+ * @param {String} argName
+ * @param {Number} errorIndex
  * @api public
  */
 
-const testInstance = function (type, arg, typeName, name, index) {
+const testInstance = function (type, arg, typeName, argName, errorIndex) {
     if (!isInstance(arg, type)) {
-        throwArgumentError(name, typeName, index);
+        throwArgumentError(argName, typeName, errorIndex);
     }
 };
