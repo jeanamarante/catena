@@ -867,9 +867,13 @@ const isInstance = function (type, arg) {
  * Check data type and error out if data type fails test. Index is optional.
  *
  * @function testArray
+ * @function testEmptyArray
+ * @function testNonEmptyArray
  * @function testObject
  * @function testNumber
  * @function testString
+ * @function testEmptyString
+ * @function testNonEmptyString
  * @function testBoolean
  * @function testFunction
  * @param {*} arg
@@ -881,6 +885,22 @@ const isInstance = function (type, arg) {
 const testArray = function (arg, name, index) {
     if (!isArray(arg)) {
         throwArgumentError(name, 'Array', index);
+    }
+};
+
+const testEmptyArray = function (arg, name, index) {
+    testArray(arg, name, index);
+
+    if (!isEmptyArray(arg)) {
+        throwError(name + ' has to be empty array.', 'ARG', index);
+    }
+};
+
+const testNonEmptyArray = function (arg, name, index) {
+    testArray(arg, name, index);
+
+    if (isEmptyArray(arg)) {
+        throwError(name + ' cannot be empty array.', 'ARG', index);
     }
 };
 
@@ -899,6 +919,22 @@ const testNumber = function (arg, name, index) {
 const testString = function (arg, name, index) {
     if (!isString(arg)) {
         throwArgumentError(name, 'String', index);
+    }
+};
+
+const testEmptyString = function (arg, name, index) {
+    testString(arg, name, index);
+
+    if (!isEmptyString(arg)) {
+        throwError(name + ' has to be empty string.', 'ARG', index);
+    }
+};
+
+const testNonEmptyString = function (arg, name, index) {
+    testString(arg, name, index);
+
+    if (isEmptyString(arg)) {
+        throwError(name + ' cannot be empty string.', 'ARG', index);
     }
 };
 
