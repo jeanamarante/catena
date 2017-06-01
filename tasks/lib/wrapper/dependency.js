@@ -732,7 +732,7 @@ const throwError = function (message, type, index) {
 };
 
 /**
- * Helper function for pretty argument error messages.
+ * Throw pretty argument error messages. Only index is optional.
  *
  * @function throwArgumentError
  * @param {String} name
