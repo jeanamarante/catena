@@ -756,10 +756,6 @@ const throwArgumentError = function (name, type, index) {
 
 const extend = function (parentName, childName) {
     if ($development) {
-        if (!$loading) {
-            throwError('Prohibited to invoke extend after Main has been initialized.', 'EXTEND');
-        }
-
         var invalidChild = !isString(childName);
         var invalidParent = !isString(parentName);
 
@@ -783,6 +779,10 @@ const extend = function (parentName, childName) {
         if ($hierarchy.hasParent(childName)) {
             throwError(childName + ' cannot extend ' + parentName + ' as it is already extending the ' + $hierarchy.getParent(childName) + ' module.', 'EXTEND');
         }
+    }
+
+    if (!$loading) {
+        throwError('Prohibited to invoke extend after Main has been initialized.', 'EXTEND');
     }
 
     $hierarchy.link(parentName, childName);
