@@ -635,74 +635,6 @@ $descriptor.value = function (name, type, index) {
 Object.defineProperty($rootClassProto.prototype, 'throwArgumentError', $descriptor);
 
 /**
- * Validate data type.
- *
- * @function isNaN
- * @function isNull
- * @function isArray
- * @function isObject
- * @function isNumber
- * @function isString
- * @function isBoolean
- * @function isFunction
- * @function isInstance
- * @function isUndefined
- * @function isEmptyArray
- * @function isEmptyString
- * @param {*} arg
- * @return Boolean
- * @api public
- */
-
-const isNaN = function (arg) {
-    return Number.isNaN(arg);
-};
-
-const isNull = function (arg) {
-    return arg === null;
-};
-
-const isArray = function (arg) {
-    return Array.isArray(arg);
-};
-
-const isObject = function (arg) {
-    return arg !== null && !isArray(arg) && typeof arg === 'object';
-};
-
-const isNumber = function (arg) {
-    return !Number.isNaN(arg) && typeof arg === 'number';
-};
-
-const isString = function (arg) {
-    return typeof arg === 'string';
-};
-
-const isBoolean = function (arg) {
-    return typeof arg === 'boolean';
-};
-
-const isFunction = function (arg) {
-    return typeof arg === 'function';
-};
-
-const isInstance = function (type, arg) {
-    return arg instanceof type;
-};
-
-const isUndefined = function (arg) {
-    return arg === undefined;
-};
-
-const isEmptyArray = function (arg) {
-    return isArray(arg) && arg.length === 0;
-};
-
-const isEmptyString = function (arg) {
-    return arg === '';
-};
-
-/**
  * Return positive integer. Clamp between 0 and Infinity.
  *
  * @function clampErrorStackIndex
@@ -854,4 +786,72 @@ const extend = function (parentName, childName) {
     }
 
     $hierarchy.link(parentName, childName);
+};
+
+/**
+ * Validate data type.
+ *
+ * @function isNaN
+ * @function isNull
+ * @function isArray
+ * @function isObject
+ * @function isNumber
+ * @function isString
+ * @function isBoolean
+ * @function isFunction
+ * @function isInstance
+ * @function isUndefined
+ * @function isEmptyArray
+ * @function isEmptyString
+ * @param {*} arg
+ * @return Boolean
+ * @api public
+ */
+
+const isNaN = function (arg) {
+    return Number.isNaN(arg);
+};
+
+const isNull = function (arg) {
+    return arg === null;
+};
+
+const isArray = function (arg) {
+    return Array.isArray(arg);
+};
+
+const isObject = function (arg) {
+    return arg !== null && !isArray(arg) && typeof arg === 'object';
+};
+
+const isNumber = function (arg) {
+    return !Number.isNaN(arg) && typeof arg === 'number';
+};
+
+const isString = function (arg) {
+    return typeof arg === 'string';
+};
+
+const isBoolean = function (arg) {
+    return typeof arg === 'boolean';
+};
+
+const isFunction = function (arg) {
+    return typeof arg === 'function';
+};
+
+const isInstance = function (type, arg) {
+    return arg instanceof type;
+};
+
+const isUndefined = function (arg) {
+    return arg === undefined;
+};
+
+const isEmptyArray = function (arg) {
+    return isArray(arg) && arg.length === 0;
+};
+
+const isEmptyString = function (arg) {
+    return arg === '';
 };
