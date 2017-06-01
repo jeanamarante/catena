@@ -618,6 +618,23 @@ $descriptor.value = function (message, type, index) {
 Object.defineProperty($rootClassProto.prototype, 'throwError', $descriptor);
 
 /**
+ * @function throwArgumentError
+ * @param {String} name
+ * @param {String} type
+ * @param {Number} index
+ * @api public
+ */
+
+$descriptor.value = function (name, type, index) {
+    index = clampErrorStackIndex(index);
+
+    // Increment index by one to ignore this method in error stack.
+    throwArgumentError(name, type, index + 1);
+};
+
+Object.defineProperty($rootClassProto.prototype, 'throwArgumentError', $descriptor);
+
+/**
  * Validate data type.
  *
  * @function isNaN
@@ -780,6 +797,20 @@ const throwError = function (message, type, index) {
     var calledModule = !isEmptyString(call) ? ' Module: ' + call : '';
 
     throw new Error(type + message + calledModule);
+};
+
+/**
+ * Helper function for pretty argument error messages.
+ *
+ * @function throwArgumentError
+ * @param {String} name
+ * @param {String} type
+ * @param {Number} index
+ * @api public
+ */
+
+const throwArgumentError = function (name, type, index) {
+    throwError(name + ' must be [' + type + ']', 'ARG', index);
 };
 
 /**
