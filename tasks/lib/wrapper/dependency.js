@@ -865,7 +865,6 @@ const isEmptyString = function (arg) {
  * @function testString
  * @function testBoolean
  * @function testFunction
- * @function testInstance
  * @param {*} arg
  * @param {String} name
  * @api public
