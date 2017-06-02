@@ -1,6 +1,9 @@
 // Is catena still loading dependencies?
 var $loading = true;
 
+// Has an error been thrown manually before loading finishes?
+var $errorThrown = false;
+
 // Helper methods for CLASS modules. All CLASS modules
 // link their prototypes to all the functions declared here.
 var $rootClassProto = { prototype: {} };
@@ -717,6 +720,10 @@ const traceCallFromErrorStack = function (index) {
  */
 
 const throwError = function (message, type, index) {
+    if ($loading) {
+        $errorThrown = true;
+    }
+
     message = isString(message) ? message : '';
 
     // Default to ERROR if not a string or empty string.
