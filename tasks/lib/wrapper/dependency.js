@@ -968,7 +968,7 @@ const testFunction = function (arg, argName, errorIndex) {
  */
 
 const testInstance = function (type, arg, typeName, argName, errorIndex) {
-    if (!isInstance(arg, type)) {
+    if (!isInstance(type, arg)) {
         throwArgumentError(argName, typeName, errorIndex);
     }
 };
