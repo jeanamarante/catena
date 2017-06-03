@@ -410,12 +410,6 @@ var $appendSingles = function () {
  */
 
 var $defineSingleProperties = function (name, module) {
-    // The same error throwing methods used in CLASS modules
-    // can be shared in SINGLE modules.
-    $descriptor.value = $rootClassProto.prototype.throwError;
-
-    Object.defineProperty(module, 'throwError', $descriptor);
-
     $descriptor.value = name;
 
     Object.defineProperty(module, '$name', $descriptor);
@@ -604,40 +598,6 @@ $descriptor.value = function () {
 Object.defineProperty($rootClassProto.prototype, 'abstract', $descriptor);
 
 /**
- * @function throwError
- * @param {String} message
- * @param {String} type
- * @param {Number} index
- * @api public
- */
-
-$descriptor.value = function (message, type, index) {
-    index = clampErrorStackIndex(index);
-
-    // Increment index by one to ignore this method in error stack.
-    throwError(message, type, index + 1);
-};
-
-Object.defineProperty($rootClassProto.prototype, 'throwError', $descriptor);
-
-/**
- * @function throwArgumentError
- * @param {String} name
- * @param {String} type
- * @param {Number} index
- * @api public
- */
-
-$descriptor.value = function (name, type, index) {
-    index = clampErrorStackIndex(index);
-
-    // Increment index by one to ignore this method in error stack.
-    throwArgumentError(name, type, index + 1);
-};
-
-Object.defineProperty($rootClassProto.prototype, 'throwArgumentError', $descriptor);
-
-/**
  * Return positive integer. Clamp between 0 and Infinity.
  *
  * @function clampErrorStackIndex
@@ -739,7 +699,7 @@ const throwError = function (message, type, index) {
 };
 
 /**
- * Throw pretty argument error messages. Only index is optional.
+ * Throw pretty argument error messages. index argument is optional.
  *
  * @function throwArgumentError
  * @param {String} name
