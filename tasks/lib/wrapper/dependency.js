@@ -413,6 +413,10 @@ var $defineSingleProperties = function (name, module) {
     $descriptor.value = name;
 
     Object.defineProperty(module, '$name', $descriptor);
+
+    $descriptor.value = true;
+
+    Object.defineProperty(module, '$isSingle', $descriptor);
 };
 
 /**
@@ -580,7 +584,7 @@ Object.defineProperty($rootClassProto.prototype, 'super', $descriptor);
  */
 
 $descriptor.value = function () {
-    var call = traceCallFromErrorStack(1).split('.');
+    var call = traceCallFromErrorStack(this, 1).split('.');
     var message = '';
 
     // abstract can only be invoked inside the methods of CLASS module instances.
@@ -592,10 +596,15 @@ $descriptor.value = function () {
         message = 'Invoked method is meant to be overwritten.';
     }
 
-    throwError(message, 'ABSTRACT', 1);
+    throwError(message, 'ABSTRACT', this, 1);
 };
 
 Object.defineProperty($rootClassProto.prototype, 'abstract', $descriptor);
+
+// CLASS flag.
+$descriptor.value = true;
+
+Object.defineProperty($rootClassProto.prototype, '$isClass', $descriptor);
 
 /**
  * Return positive integer. Clamp between 0 and Infinity.
@@ -611,7 +620,7 @@ const clampErrorStackIndex = function (index) {
 };
 
 /**
- * Return clean call stack with CLASS and SINGLE methods.
+ * Return clean call stack with invoked CLASS and SINGLE methods.
  *
  * @function traceErrorStack
  * @param {Boolean} log
@@ -621,27 +630,25 @@ const clampErrorStackIndex = function (index) {
 
 const traceErrorStack = function (log) {
     var e = new Error('');
-
     var clean = [];
     var stack = e.stack;
 
-    // Regex Capture
-    // CLASS.(ErrorStacker)
-    // CLASS.(ErrorStacker).append(.trace)
-    // SINGLE.(ErrorStacker)(.trace)
-    var regex = /(?:CLASS|SINGLE)\.([\w]+)(?:\.append)?(\.[\w]+)?/g;
+    // SINGLE modules might get picked as normal objects in error stack.
+    // So check for Object in first capture group and assume it is a SINGLE.
+    // Regex Capture Examples:
+    // (CLASS)(.ErrorStacker)
+    // (CLASS)(.ErrorStacker).append(.trace)
+    // (SINGLE)(.ErrorStacker)(.trace)
+    // (Object)(.trace)
+    var regex = /(CLASS|SINGLE|Object)(\.[\w]+)(?:\.append)?(\.[\w]+)?/g;
     var result = regex.exec(stack);
 
-    while (result) {
-        var module = result[1];
-        var method = result[2];
+    while (!isNull(result)) {
+        var type = result[1];
+        var instance = isString(result[2]) ? result[2] : '';
+        var method = isString(result[3]) ? result[3] : '';
 
-        // Constructors reference the CLASS module itself.
-        if (!method) {
-            clean.push(module);
-        } else {
-            clean.push(module + method);
-        }
+        clean.push(type + instance + method);
 
         result = regex.exec(stack);
     }
@@ -655,18 +662,31 @@ const traceErrorStack = function (log) {
  * Get call in error stack.
  *
  * @function traceCallFromErrorStack
+ * @param {Object} module
  * @param {Number} index
  * @return {String}
  * @api public
  */
 
-const traceCallFromErrorStack = function (index) {
+const traceCallFromErrorStack = function (module, index) {
     index = clampErrorStackIndex(index);
 
-    var stack = traceErrorStack(false);
+    var stack = traceErrorStack(module, false);
+    var call = stack[index];
 
     // Return empty string if out of bounds.
-    return !isUndefined(stack[index]) ? stack[index] : '';
+    if (isUndefined(call)) {
+        return '';
+    } else {
+        var names = call.split('.');
+
+        // Change Object to single module's name.
+        if (names[0] === 'Object' && isObject(module) && module.$isSingle) {
+            call = module.$name + '.' + names[1];
+        }
+
+        return call;
+    }
 };
 
 /**
@@ -675,11 +695,12 @@ const traceCallFromErrorStack = function (index) {
  * @function throwError
  * @param {String} message
  * @param {String} type
+ * @param {Object} module
  * @param {Number} index
  * @api public
  */
 
-const throwError = function (message, type, index) {
+const throwError = function (message, type, module, index) {
     if ($loading) {
         $errorThrown = true;
     }
@@ -692,24 +713,25 @@ const throwError = function (message, type, index) {
     // type is wrapped around curly brackets and is uppercase.
     type = '{ ' + type.toUpperCase() + ' } ';
 
-    var call = traceCallFromErrorStack(index);
+    var call = traceCallFromErrorStack(module, index);
     var calledModule = !isEmptyString(call) ? ' Module: ' + call : '';
 
     throw new Error(type + message + calledModule);
 };
 
 /**
- * Throw pretty argument error messages. index argument is optional.
+ * Throw pretty argument error messages.
  *
  * @function throwArgumentError
  * @param {String} name
  * @param {String} type
+ * @param {Object} module
  * @param {Number} index
  * @api public
  */
 
-const throwArgumentError = function (name, type, index) {
-    throwError(name + ' must be [' + type + ']', 'ARG', index);
+const throwArgumentError = function (name, type, module, index) {
+    throwError(name + ' must be [' + type + ']', 'ARG', module, index);
 };
 
 /**
@@ -845,75 +867,76 @@ const isInstance = function (type, arg) {
  * @function testFunction
  * @param {*} arg
  * @param {String} argName
+ * @param {Object} module
  * @param {Number} errorIndex
  * @api public
  */
 
-const testArray = function (arg, argName, errorIndex) {
+const testArray = function (arg, argName, module, errorIndex) {
     if (!isArray(arg)) {
-        throwArgumentError(argName, 'Array', errorIndex);
+        throwArgumentError(argName, 'Array', module, errorIndex);
     }
 };
 
-const testEmptyArray = function (arg, argName, errorIndex) {
-    testArray(arg, argName, errorIndex);
+const testEmptyArray = function (arg, argName, module, errorIndex) {
+    testArray(arg, argName, module, errorIndex);
 
     if (!isEmptyArray(arg)) {
-        throwError(argName + ' has to be empty array.', 'ARG', errorIndex);
+        throwError(argName + ' has to be empty array.', 'ARG', module, errorIndex);
     }
 };
 
-const testNonEmptyArray = function (arg, argName, errorIndex) {
-    testArray(arg, argName, errorIndex);
+const testNonEmptyArray = function (arg, argName, module, errorIndex) {
+    testArray(arg, argName, module, errorIndex);
 
     if (isEmptyArray(arg)) {
-        throwError(argName + ' cannot be empty array.', 'ARG', errorIndex);
+        throwError(argName + ' cannot be empty array.', 'ARG', module, errorIndex);
     }
 };
 
-const testObject = function (arg, argName, errorIndex) {
+const testObject = function (arg, argName, module, errorIndex) {
     if (!isObject(arg)) {
-        throwArgumentError(argName, 'Object', errorIndex);
+        throwArgumentError(argName, 'Object', module, errorIndex);
     }
 };
 
-const testNumber = function (arg, argName, errorIndex) {
+const testNumber = function (arg, argName, module, errorIndex) {
     if (!isNumber(arg)) {
-        throwArgumentError(argName, 'Number', errorIndex);
+        throwArgumentError(argName, 'Number', module, errorIndex);
     }
 };
 
-const testString = function (arg, argName, errorIndex) {
+const testString = function (arg, argName, module, errorIndex) {
     if (!isString(arg)) {
-        throwArgumentError(argName, 'String', errorIndex);
+        throwArgumentError(argName, 'String', module, errorIndex);
     }
 };
 
-const testEmptyString = function (arg, argName, errorIndex) {
-    testString(arg, argName, errorIndex);
+const testEmptyString = function (arg, argName, module, errorIndex) {
+    testString(arg, argName, module, errorIndex);
 
     if (!isEmptyString(arg)) {
-        throwError(argName + ' has to be empty string.', 'ARG', errorIndex);
+        throwError(argName + ' has to be empty string.', 'ARG', module, errorIndex);
     }
 };
 
-const testNonEmptyString = function (arg, argName, errorIndex) {
-    testString(arg, argName, errorIndex);
+const testNonEmptyString = function (arg, argName, module, errorIndex) {
+    testString(arg, argName, module, errorIndex);
 
     if (isEmptyString(arg)) {
-        throwError(argName + ' cannot be empty string.', 'ARG', errorIndex);
+        throwError(argName + ' cannot be empty string.', 'ARG', module, errorIndex);
     }
 };
 
-const testBoolean = function (arg, argName, errorIndex) {
+const testBoolean = function (arg, argName, module, errorIndex) {
     if (!isBoolean(arg)) {
-        throwArgumentError(argName, 'Boolean', errorIndex);
+        throwArgumentError(argName, 'Boolean', module, errorIndex);
     }
 };
 
-const testFunction = function (arg, argName, errorIndex) {
+const testFunction = function (arg, argName, module, errorIndex) {
     if (!isFunction(arg)) {
-        throwArgumentError(argName, 'Function', errorIndex);
+        throwArgumentError(argName, 'Function', module, errorIndex);
     }
 };
 
@@ -923,12 +946,13 @@ const testFunction = function (arg, argName, errorIndex) {
  * @param {*} arg
  * @param {String} typeName
  * @param {String} argName
+ * @param {Object} module
  * @param {Number} errorIndex
  * @api public
  */
 
-const testInstance = function (type, arg, typeName, argName, errorIndex) {
+const testInstance = function (type, arg, typeName, argName, module, errorIndex) {
     if (!isInstance(type, arg)) {
-        throwArgumentError(argName, typeName, errorIndex);
+        throwArgumentError(argName, typeName, module, errorIndex);
     }
 };
