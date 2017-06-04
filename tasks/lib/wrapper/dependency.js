@@ -942,6 +942,7 @@ const testFunction = function (arg, argName, module, errorIndex) {
 
 /**
  * @function testInstance
+ * @function testOptionalInstance
  * @param {*} type
  * @param {*} arg
  * @param {String} typeName
@@ -954,5 +955,13 @@ const testFunction = function (arg, argName, module, errorIndex) {
 const testInstance = function (type, arg, typeName, argName, module, errorIndex) {
     if (!isInstance(type, arg)) {
         throwArgumentError(argName, typeName, module, errorIndex);
+    }
+};
+
+const testOptionalInstance = function (type, arg, typeName, argName, module, errorIndex) {
+    // Optional instances can be either null or the declared type, but
+    // they can never be undefined.
+    if (!isNull(arg) && !isInstance(type, arg)) {
+        throwError(argName + ' must be null or [' + typeName + ']', 'ARG', module, errorIndex);
     }
 };
