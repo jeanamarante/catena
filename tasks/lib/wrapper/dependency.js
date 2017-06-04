@@ -365,12 +365,12 @@ var $checkSingleStructures = function () {
 
         // SINGLE modules must be an object literal.
         if (!isObject(module)) {
-            throwError(name + ' module must be [Object].', 'SINGLE');
+            throwError(name + ' module must be [Object]', 'SINGLE');
         }
 
         // init must be a function.
         if (!isUndefined(module.init) && !isFunction(module.init)) {
-            throwError('init method in ' + name + ' module must be [Function].', 'SINGLE');
+            throwError('init method in ' + name + ' module must be [Function]', 'SINGLE');
         }
     }
 };
@@ -753,11 +753,11 @@ const extend = function (parentName, childName) {
         }
 
         if (invalidParent) {
-            throwError('parentName for child ' + childName + ' module must be [String].', 'EXTEND');
+            throwError('parentName for child ' + childName + ' module must be [String]', 'EXTEND');
         }
 
         if (invalidChild) {
-            throwError('childName for parent ' + parentName + ' module must be [String].', 'EXTEND');
+            throwError('childName for parent ' + parentName + ' module must be [String]', 'EXTEND');
         }
 
         if (parentName === childName) {
