@@ -651,6 +651,8 @@ const traceErrorStack = function (log) {
 
         if (first === 'Object') {
             clean.push(first + '.' + second);
+
+        // Do not show module type in stack.
         } else {
             clean.push(second + third);
         }
