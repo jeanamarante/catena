@@ -636,19 +636,24 @@ const traceErrorStack = function (log) {
     // SINGLE modules might get picked as normal objects in error stack.
     // So check for Object in first capture group and assume it is a SINGLE.
     // Regex Capture Examples:
-    // (CLASS)(.ErrorStacker)
-    // (CLASS)(.ErrorStacker).append(.trace)
-    // (SINGLE)(.ErrorStacker)(.trace)
-    // (Object)(.trace)
-    var regex = /(CLASS|SINGLE|Object)(\.[\w]+)(?:\.append)?(\.[\w]+)?/g;
+    // (CLASS).(ErrorStacker)
+    // (CLASS).(ErrorStacker).append(.trace)
+    // (SINGLE).(ErrorStacker)(.trace)
+    // (Object).(trace)
+    var regex = /(CLASS|SINGLE|Object)\.([\w]+)(?:\.append)?(\.[\w]+)?/g;
     var result = regex.exec(stack);
 
     while (!isNull(result)) {
-        var type = result[1];
-        var instance = isString(result[2]) ? result[2] : '';
-        var method = isString(result[3]) ? result[3] : '';
+        var first = result[1];
+        var second = result[2];
+        // The third capture group might return undefined.
+        var third = isString(result[3]) ? result[3] : '';
 
-        clean.push(type + instance + method);
+        if (first === 'Object') {
+            clean.push(first + '.' + second);
+        } else {
+            clean.push(second + third);
+        }
 
         result = regex.exec(stack);
     }
@@ -671,7 +676,7 @@ const traceErrorStack = function (log) {
 const traceCallFromErrorStack = function (module, index) {
     index = clampErrorStackIndex(index);
 
-    var stack = traceErrorStack(module, false);
+    var stack = traceErrorStack(false);
     var call = stack[index];
 
     // Return empty string if out of bounds.
