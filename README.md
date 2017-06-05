@@ -95,7 +95,9 @@ References all of the modules that can be instantiated. Always remember to decla
 
 Here's a list of properties exposed by catena (Inside the prototype of CLASS instances):
 
+* $isClass
 * $applied
+* $parentName
 * $name
 
 ```js
@@ -137,7 +139,7 @@ CONST.GRAVITY = 9.8;
 
 Here's a list of constants exposed by catena: (Inside CONST)
 
-* $DEV: Will always be true unless you run catena with the deploy argument. Useful for performing expensive tests at runtime prior to having your code in production.
+* $DEV: Will always be true unless you run catena with the deploy argument. Useful for performing expensive tests at runtime prior to having your code deployed.
 
 &nbsp;
 
@@ -147,11 +149,13 @@ Singletons reference object literals, like the append property in CLASS modules.
 
 Here's a list of properties exposed by catena: (Inside SINGLE modules)
 
+* $isSingle
 * $name
 
 ```js
 SINGLE.Mouse = {
-    // Declaring init as something other than a function will throw an error.
+    // Declaring init as something else than a function will throw an error.
+    // init will be unreachable after being invoked at the start of the program.
     init: function () {}
 };
 ```
@@ -244,28 +248,6 @@ CLASS.Triangle.append = {
 
 &nbsp;
 
-##### throwError
-
-Arguments are optional. type will always be shown as uppercase. You can also use this method inside SINGLE modules.
-
-_throwError(message: String, type: String);_
-
-```js
-// Shape.js
-
-CLASS.GUIComponent = function (id) {
-    this._el = document.getElementById(id);
-
-    if (!this._el) {
-        this.throwError('Element could not be found.');
-    }
-};
-
-// Omitted append for brevity.
-```
-
-&nbsp;
-
 #### Overriding Methods
 
 Invoke a method from a specific class while keeping the same context (object reference).
@@ -329,7 +311,21 @@ $solveDependencies = function () {};
 
 #### Utility Functions
 
-Useful functions catena uses internally that are exposed for you to use.
+Useful functions that catena uses internally that are exposed for you to use.
+
+&nbsp;
+
+##### throwError, throwArgumentError
+
+All arguments are optional. type will always be shown as uppercase.
+
+_throwError(message: String, type: String, module: Object, index: Number);_
+
+For throwArgumentError the last two params are optional but the first two are required for the error message.
+
+_throwArgumentError(name: String, type: String, module: Object, index: Number);_
+
+&nbsp;
 
 ##### isNaN,&nbsp; isNull,&nbsp; isArray,&nbsp; isObject,&nbsp; isNumber,&nbsp; isString,&nbsp; isBoolean,&nbsp; isFunction,&nbsp; isInstance,&nbsp; isUndefined,&nbsp; isEmptyArray,&nbsp; isEmptyString
 
@@ -341,3 +337,15 @@ isInstance is unique compared to the other functions as it requires two argument
 
 _isInstance(type: *, arg: *);_
 _isInstance(CLASS.Shape, new CLASS.Triangle());_
+
+&nbsp;
+
+##### testArray,&nbsp; testEmptyArray,&nbsp; testNonEmptyArray,&nbsp; testObject,&nbsp; testNumber,&nbsp; testString,&nbsp; testEmptyString,&nbsp; testNonEmptyString,&nbsp; testBoolean,&nbsp; testFunction,&nbsp; testInstance,&nbsp; testOptionalInstance
+
+Collection of functions that will check if data type is valid and error the program invoking throwArgumentError if it is invalid.
+
+_testArray(arg: *, argName: String, module: Object, errorIndex: Number);_
+
+testInstance and testOptionalInstance are unique as they require two more arguments than the other functions.
+
+_testInstance(type: *, arg: *, argName: String, typeName: String, module: Object, errorIndex: Number);_
