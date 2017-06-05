@@ -1,7 +1,7 @@
 {
 	"name": "catena",
 	"description": "Wrapper Library for Javascript OOP",
-	"version": "0.8.8",
+	"version": "0.8.9",
 	"author": {
 		"name": "Jean Amarante",
 		"url": "https://github.com/jeanamarante"
