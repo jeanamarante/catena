@@ -16,6 +16,9 @@ var $descriptor = {
     configurable: false
 };
 
+// Array for SINGLE modules that have the postInit method declared.
+var $singlePostInitModules = [];
+
 // Stores the links between parent and child modules.
 var $hierarchy = {
     parents: {},
@@ -368,9 +371,13 @@ var $checkSingleStructures = function () {
             throwError(name + ' module must be [Object]', 'SINGLE');
         }
 
-        // init must be a function.
+        // init and postInit must be a function if declared.
         if (!isUndefined(module.init) && !isFunction(module.init)) {
-            throwError('init method in ' + name + ' module must be [Function]', 'SINGLE');
+            throwError('init method in ' + name + ' module must be undefined or [Function]', 'SINGLE');
+        }
+
+        if (!isUndefined(module.postInit) && !isFunction(module.postInit)) {
+            throwError('postInit method in ' + name + ' module must be undefined or [Function]', 'SINGLE');
         }
     }
 };
@@ -391,13 +398,21 @@ var $appendSingles = function () {
 
         $defineSingleProperties(name, module);
 
+        // Invoke init method in SINGLE module if declared.
         if (!isUndefined(module.init)) {
             module.init();
 
-            // Make init method unreachable after being invoked.
+            // Make init unreachable after being invoked.
             module.init = undefined;
         }
+
+        // Queue postInit methods and invoke them after all init methods are invoked.
+        if (!isUndefined(module.postInit)) {
+            $singlePostInitModules.push(module);
+        }
     }
+
+    $invokeSinglePostInits();
 };
 
 /**
@@ -417,6 +432,24 @@ var $defineSingleProperties = function (name, module) {
     $descriptor.value = true;
 
     Object.defineProperty(module, '$isSingle', $descriptor);
+};
+
+/**
+ * Iterate and invoke all SINGLE modules that have the postInit method declared.
+ *
+ * @function invokeSinglePostInits
+ * @api internal
+ */
+
+var $invokeSinglePostInits = function () {
+    for (var i = 0, max = $singlePostInitModules.length; i < max; i++) {
+        var module = $singlePostInitModules[i];
+
+        module.postInit();
+
+        // Make postInit unreachable after being invoked.
+        module.postInit = null;
+    }
 };
 
 /**

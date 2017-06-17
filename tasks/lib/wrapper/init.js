@@ -29,6 +29,7 @@ window.addEventListener('load', function (e) {
     $errorThrown = undefined;
     $rootClassProto = undefined;
     $descriptor = undefined;
+    $singlePostInitModules = undefined;
     $hierarchy = undefined;
 
     // Internal functions.
@@ -47,6 +48,7 @@ window.addEventListener('load', function (e) {
     $checkSingleStructures = undefined;
     $appendSingles = undefined;
     $defineSingleProperties = undefined;
+    $invokeSinglePostInits = undefined;
     $freezeModules = undefined;
     $freezeConstObject = undefined;
     $freezeConstArray = undefined;
