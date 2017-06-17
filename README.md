@@ -145,7 +145,7 @@ Here's a list of constants exposed by catena: (Inside CONST)
 
 #### SINGLE
 
-Singletons reference object literals, like the append property in CLASS modules. If the init method is declared in a SINGLE module, it will be invoked prior to Main being instantiated.
+Singletons reference object literals, like the append property in CLASS modules. If the init or postInit method are declared in a SINGLE module, they will be invoked prior to Main being instantiated.
 
 Here's a list of properties exposed by catena: (Inside SINGLE modules)
 
@@ -154,9 +154,16 @@ Here's a list of properties exposed by catena: (Inside SINGLE modules)
 
 ```js
 SINGLE.Mouse = {
-    // Declaring init as something else than a function will throw an error.
-    // init will be unreachable after being invoked at the start of the program.
-    init: function () {}
+    // Declaring init or postInit as something other than a function will throw an error.
+    // init and postInit will be unreachable after being invoked at the start of the program.
+    init: function () {
+        // Initialize module properties.
+    },
+
+    // postInit is invoked after all init methods are invoked.
+    postInit: function () {
+        // Interact with other initialized modules.
+    }
 };
 ```
 
