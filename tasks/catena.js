@@ -96,25 +96,19 @@ function concat (grunt, task, files) {
         dest: task.data.dest
     });
 
-    grunt.task.run('concat:catena');
+    // Minify dest file after concatening it when deploying.
+    if (isDeploying) {
+        grunt.registerTask('minify:catena', '', function () {
+            require('./lib/compiler/minify.js')(grunt, task);
+        });
 
-    minify(grunt, task);
-    watch(grunt, task);
-}
+        grunt.task.run('concat:catena', 'minify:catena');
 
-/**
- * Minify dest file.
- *
- * @function minify
- * @param {Object} grunt
- * @param {Object} task
- * @api private
- */
+    } else {
+        grunt.task.run('concat:catena');
 
-function minify (grunt, task) {
-    if (!isDeploying) { return undefined; }
-
-    require('./lib/compiler/minify.js')(grunt, task);
+        watch(grunt, task);
+    }
 }
 
 /**
