@@ -114,7 +114,7 @@ function concat (grunt, task, files) {
 function minify (grunt, task) {
     if (!isDeploying) { return undefined; }
 
-    require('./lib/minify.js')(grunt, task);
+    require('./lib/compiler/minify.js')(grunt, task);
 }
 
 /**
