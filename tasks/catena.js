@@ -98,7 +98,23 @@ function concat (grunt, task, files) {
 
     grunt.task.run('concat:catena');
 
+    minify(grunt, task);
     watch(grunt, task);
+}
+
+/**
+ * Minify dest file.
+ *
+ * @function minify
+ * @param {Object} grunt
+ * @param {Object} task
+ * @api private
+ */
+
+function minify (grunt, task) {
+    if (!isDeploying) { return undefined; }
+
+    require('./lib/minify.js')(grunt, task);
 }
 
 /**
