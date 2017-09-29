@@ -22,7 +22,7 @@
 		"recursive-readdir": "^2.1.0",
 		"grunt-contrib-watch": "^1.0.0",
 		"grunt-contrib-concat": "^1.0.0",
-		"google-closure-compiler-js": "20170910.0.0"
+		"google-closure-compiler": "20170910.0.0"
 	},
 	"keywords": [
 		"catena",
