@@ -131,6 +131,8 @@ module.exports = function (grunt, task) {
         }
     });
 
+    // Force delete the files google-closure-compiler uses to minify
+    // dest after closure-compiler task is done.
     grunt.registerTask('cleanup:catena', '', function () {
         grunt.option('force', true);
 
