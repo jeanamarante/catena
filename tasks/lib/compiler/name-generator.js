@@ -124,6 +124,7 @@ module.exports.generateName = function () {
 
         name = concatenateCharacters();
 
+        // If key is not declared in object then name is unique.
         isUnique = !sequenceNames[name];
     }
 
