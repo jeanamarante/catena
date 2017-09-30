@@ -53,6 +53,8 @@ function isInvalidFile (file, stats) {
  */
 
 function buildFileList (grunt, task) {
+    if (!grunt.file.isDir(task.data.src) || typeof task.data.dest !== 'string') { return undefined; }
+
     // recursive-readdir is asynchronous.
     var done = task.async();
     var files = [];
