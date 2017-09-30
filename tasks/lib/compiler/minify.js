@@ -6,11 +6,23 @@ var compilePath = '';
 var externsPath = '';
 var moduleNames = {};
 
-function parseDest (grunt, task) {
+/**
+ * Parse dest file and mangle all CLASS module names.
+ *
+ * @function parseDestFile
+ * @param {Object} grunt
+ * @param {Object} task
+ * @api private
+ */
+
+function parseDestFile (grunt, task) {
     var file = grunt.file.read(task.data.dest);
 
+    // Match CLASS.Module
     file = file.replace(/CLASS\s*\.\s*([A-Za-z0-9-_]+)/g, function (match, $1) {
+        // Store mangled name if it has not been matched yet.
         if (moduleNames[$1] === undefined) {
+            // Main is not mangled.
             if ($1 === 'Main') {
                 moduleNames[$1] = $1;
             } else {
@@ -21,10 +33,12 @@ function parseDest (grunt, task) {
         return "CLASS['" + moduleNames[$1] + "']";
     });
 
+    // Match extend('ParentModule', 'ChildModule')
     file = file.replace(/extend\s*\(\s*['"](.*)['"]\s*,\s*['"](.*)['"]\s*\)/g, function (match, $1, $2) {
         return "extend('" + moduleNames[$1] + "', '" + moduleNames[$2]  + "')";
     });
 
+    // Match _$_.Module
     file = file.replace(/\_\$\_\s*\.\s*([A-Za-z0-9-_]*)/g, function (match, $1) {
         return "_$_['" + moduleNames[$1] + "']";
     });
@@ -32,17 +46,28 @@ function parseDest (grunt, task) {
     grunt.file.write(compilePath, file);
 }
 
+/**
+ * Write file of protected values and properties catena uses.
+ *
+ * @function writeExternsFile
+ * @param {Object} grunt
+ * @param {Object} task
+ * @api private
+ */
+
 function writeExternsFile (grunt, task) {
     var file = '';
 
     file += stringifyExternsData(grunt, task);
 
+    // SINGLE container and properties.
     file += 'var SINGLE = {};';
     file += 'SINGLE.$name = "";';
     file += 'SINGLE.$isSingle = true;';
     file += 'SINGLE.init = function () {};';
     file += 'SINGLE.postInit = function () {};';
 
+    // CLASS container and properties.
     file += 'var CLASS = {};';
     file += 'CLASS.$name = "";';
     file += 'CLASS.$isClass = true;';
@@ -54,6 +79,16 @@ function writeExternsFile (grunt, task) {
 
     grunt.file.write(externsPath, file);
 }
+
+/**
+ * Concatenate manually declared externs into variable declarations.
+ *
+ * @function stringifyExternsData
+ * @param {Object} grunt
+ * @param {Object} task
+ * @return {String}
+ * @api private
+ */
 
 function stringifyExternsData (grunt, task) {
     var arr = task.data.externs;
@@ -75,7 +110,7 @@ module.exports = function (grunt, task) {
     compilePath = path.join(tmpDir, 'compile.js');
     externsPath = path.join(tmpDir, 'externs.js');
 
-    parseDest(grunt, task);
+    parseDestFile(grunt, task);
     writeExternsFile(grunt, task);
 
     closureCompiler.grunt(grunt);
