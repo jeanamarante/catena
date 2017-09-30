@@ -9,7 +9,7 @@ var moduleNames = {};
 function parseDest (grunt, task) {
     var file = grunt.file.read(task.data.dest);
 
-    file = file.replace(/CLASS\.([A-Za-z0-9-_]+)/g, function (match, $1) {
+    file = file.replace(/CLASS\s*\.\s*([A-Za-z0-9-_]+)/g, function (match, $1) {
         if (moduleNames[$1] === undefined) {
             if ($1 === 'Main') {
                 moduleNames[$1] = $1;
@@ -21,11 +21,11 @@ function parseDest (grunt, task) {
         return "CLASS['" + moduleNames[$1] + "']";
     });
 
-    file = file.replace(/extend\(\s*'(.*)',\s*'(.*)'\);/g, function (match, $1, $2) {
-        return "extend('" + moduleNames[$1] + "', '" + moduleNames[$2]  + "');";
+    file = file.replace(/extend\s*\(\s*['"](.*)['"]\s*,\s*['"](.*)['"]\s*\)/g, function (match, $1, $2) {
+        return "extend('" + moduleNames[$1] + "', '" + moduleNames[$2]  + "')";
     });
 
-    file = file.replace(/\_\$\_\.([A-Za-z0-9-_]*)/g, function (match, $1) {
+    file = file.replace(/\_\$\_\s*\.\s*([A-Za-z0-9-_]*)/g, function (match, $1) {
         return "_$_['" + moduleNames[$1] + "']";
     });
 
