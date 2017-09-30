@@ -39,20 +39,18 @@ function writeExternsFile (grunt, task) {
 
     file += 'var SINGLE = {};';
     file += 'SINGLE.$name = "";';
+    file += 'SINGLE.$isSingle = true;';
+    file += 'SINGLE.init = function () {};';
+    file += 'SINGLE.postInit = function () {};';
 
     file += 'var CLASS = {};';
     file += 'CLASS.$name = "";';
+    file += 'CLASS.$isClass = true;';
+    file += 'CLASS.$applied = true;';
     file += 'CLASS.$parentName = "";';
-
-    var keys = Object.keys(moduleNames);
-
-    for (var i = 0, max = keys.length; i < max; i++) {
-        var name = moduleNames[keys[i]];
-
-        file += 'CLASS.' + name + ' = {};';
-        file += 'CLASS.' + name + '.append = {};';
-        file += 'CLASS.' + name + '.super = function () {};';
-    }
+    file += 'CLASS.append = {};';
+    file += 'CLASS.super = function () {};';
+    file += 'CLASS.abstract = function () {};';
 
     grunt.file.write(externsPath, file);
 }
