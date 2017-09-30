@@ -60,12 +60,12 @@ function writeExternsFile (grunt, task) {
 function stringifyExternsData (grunt, task) {
     var arr = task.data.externs;
 
-    if (arr === undefined) { return ''; }
+    if (!Array.isArray(arr)) { return ''; }
 
     var content = '';
 
     for (var i = 0, max = arr.length; i < max; i++) {
-        content += 'var ' + arr[i] + ' = {};';
+        content += 'var ' + String(arr[i]) + ' = {};';
     }
 
     return content;
