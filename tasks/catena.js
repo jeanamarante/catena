@@ -96,19 +96,41 @@ function concat (grunt, task, files) {
         dest: task.data.dest
     });
 
-    // Minify dest file after concatening it when deploying.
+    // Minify and license dest file after concatening it when deploying.
     if (isDeploying) {
         grunt.registerTask('minify:catena', '', function () {
             require('./lib/compiler/minify.js')(grunt, task);
         });
 
-        grunt.task.run('concat:catena', 'minify:catena');
+        grunt.registerTask('license:catena', '', function () {
+            license(grunt, task);
+        });
+
+        grunt.task.run('concat:catena', 'minify:catena', 'license:catena');
 
     } else {
         grunt.task.run('concat:catena');
 
         watch(grunt, task);
     }
+}
+
+/**
+ * Prepend license file content to dest file.
+ *
+ * @function license
+ * @param {Object} grunt
+ * @param {Object} task
+ * @api private
+ */
+
+function license (grunt, task) {
+    if (!grunt.file.isFile(task.data.license)) { return undefined; }
+
+    var destFile = grunt.file.read(task.data.dest);
+    var licenseFile = grunt.file.read(task.data.license);
+
+    grunt.file.write(task.data.dest, licenseFile + '\x0A' + destFile);
 }
 
 /**
