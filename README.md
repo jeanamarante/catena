@@ -30,7 +30,7 @@ Task targets, files and options may be specified according to the Grunt [Configu
 
 ### Description
 
-catena is a wrapper library that facilites the use of prototypes and forces coding conventions that facilitate the maintainance of big projects. It is recommended that you only use catena in apps that will run in a modern browser.
+catena is a wrapper library that facilites the use of prototypes and forces coding conventions that facilitate the maintenance of big projects. It is recommended that you only use catena in apps that will run in a modern browser.
 
 &nbsp;
 
