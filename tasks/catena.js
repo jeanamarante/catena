@@ -136,6 +136,7 @@ function license (grunt, task) {
     var destFile = grunt.file.read(task.data.dest);
     var licenseFile = grunt.file.read(task.data.license);
 
+    // Prepend content read from license file as multi-line comment.
     var content = '';
     content += '/****************************************'
     content += '\x0A' + licenseFile + '\x0A';
