@@ -45,13 +45,13 @@ Basic chess game that shows the correct way to use catena. [Click here for demo 
 ```js
 // Project configuration.
 grunt.config.init({
-	catena: {
-            src: 'modules',
-            dest: 'dist/app.js',
-            watch: true,
-            externs: ['BLITTER', 'YUI', 'jQuery', 'd3'],
-            license: 'legal/license.txt'
-	}
+    catena: {
+        src: 'modules',
+        dest: 'dist/app.js',
+        watch: true,
+        externs: ['BLITTER', 'YUI', 'jQuery', 'd3'],
+        license: 'legal/license.txt'
+    }
 });
 ```
 
@@ -116,12 +116,12 @@ Here's a list of properties exposed by catena (Inside the prototype of CLASS ins
 // Parent.js
 
 CLASS.Parent = function () {
-	// Constructor
+    // Constructor
 };
 
 CLASS.Parent.append = {
-	// Properties and methods declared in append will
-	// be shared by all instances of the module.
+    // Properties and methods declared in append will
+    // be shared by all instances of the module.
 };
 
 // Child.js
@@ -129,13 +129,13 @@ CLASS.Parent.append = {
 extend('Parent', 'Child');
 
 CLASS.Child = function () {
-	// Call parent's constructor and inherit all of its properties.
-	this.super();
+    // Call parent's constructor and inherit all of its properties.
+    this.super();
 };
 
 CLASS.Child.append = {
-	// Any properties or methods that share the same name to
-	// any of the Parent's are overwritten.
+    // Any properties or methods that share the same name to
+    // any of the Parent's are overwritten.
 };
 ```
 
@@ -199,8 +199,8 @@ _super(args);_
 // Point.js
 
 CLASS.Point = function (x, y) {
-	this.x = x;
-	this.y = y;
+    this.x = x;
+    this.y = y;
 };
 
 // append omitted for brevity.
@@ -210,11 +210,11 @@ CLASS.Point = function (x, y) {
 extend('Point', 'Square');
 
 CLASS.Square = function (x, y, width, height) {
-	// Pass arguments into the parent's constructor.
-	this.super(x, y);
+    // Pass arguments into the parent's constructor.
+    this.super(x, y);
 
-	this.width = width;
-	this.height = height;
+    this.width = width;
+    this.height = height;
 };
 
 // append omitted for brevity.
@@ -234,10 +234,10 @@ _abstract();_
 CLASS.Shape = function () {};
 
 CLASS.Shape.append = {
-	// If method is invoked, program will error out.
-	calculateArea: function () {
-		this.abstract();
-	}
+    // If method is invoked, program will error out.
+    calculateArea: function () {
+        this.abstract();
+    }
 };
 
 // Square.js
@@ -247,9 +247,9 @@ extend('Shape', 'Square');
 // Omitted constructor for brevity.
 
 CLASS.Square.append = {
-	calculateArea: function () {
-		// Calculate the area of the square.
-	}
+    calculateArea: function () {
+        // Calculate the area of the square.
+    }
 };
 
 // Triangle.js
@@ -259,9 +259,9 @@ extend('Shape', 'Triangle');
 // Omitted constructor for brevity.
 
 CLASS.Triangle.append = {
-	calculateArea: function () {
-		// Calculate the area of the triangle.
-	}
+    calculateArea: function () {
+        // Calculate the area of the triangle.
+    }
 };
 ```
 
@@ -277,7 +277,7 @@ Invoke a method from a specific class while keeping the same context (object ref
 CLASS.Parent = function () {};
 
 CLASS.Parent.append = {
-	callMe: function () {}
+    callMe: function () {}
 };
 
 // Child.js
@@ -285,16 +285,16 @@ CLASS.Parent.append = {
 extend('Parent', 'Child');
 
 CLASS.Child = function () {
-	this.super(); // Call parent's constructor.
+    this.super(); // Call parent's constructor.
 };
 
 CLASS.Child.append = {
-	// The _$_ pointer references all CLASS module prototypes.
-	callMe: function () {
-		_$_.Parent.callMe.call(this);
+    // The _$_ pointer references all CLASS module prototypes.
+    callMe: function () {
+        _$_.Parent.callMe.call(this);
 
-		alert('With _$_ we can expand the functionality of Parent.callMe in Child.callMe');
-	}
+        alert('With _$_ we can expand the functionality of Parent.callMe in Child.callMe');
+    }
 };
 ```
 
