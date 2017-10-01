@@ -30,7 +30,7 @@ Task targets, files and options may be specified according to the Grunt [Configu
 
 ### Description
 
-catena is a wrapper library that facilites the use of prototypes and forces coding conventions that facilitate the maintainance of big projects. It is recommended that you only use catena in native apps or websites that will run in a modern browser.
+catena is a wrapper library that facilites the use of prototypes and forces coding conventions that facilitate the maintainance of big projects. It is recommended that you only use catena in apps that will run in a modern browser.
 
 &nbsp;
 
@@ -48,14 +48,18 @@ grunt.config.init({
 	catena: {
 		src: 'modules',
 		dest: 'dist/app.js',
-		watch: true
+		watch: true,
+		externs: ['BLITTER', 'YUI', 'jQuery', 'd3'],
+        license: 'legal/license.txt'
 	}
 });
 ```
 
-#### deploy (TODO)
+#### deploy
 
 Run task with deploy argument `grunt catena:deploy` to minify dest file.
+
+_You must have the java command line tool installed so the google-closure-compiler npm module doesn't error out when deploying._
 
 #### src
 
@@ -67,7 +71,15 @@ Path to concatenated Javascript file.
 
 #### watch
 
-Set watch to true to run the catena task every time you change a file in the src directory.
+Set watch to true to run the catena task every time you change a file in the src directory. Watch never runs when deploying.
+
+#### externs
+
+List of globally exposed components (libraries, frameworks, etc.) that must be declared to prevent the closure compiler from throwing an error when deploying.
+
+#### license
+
+Path to file containing license agreement. Content in file is prepended to dest file when deploying.
 
 &nbsp;
 
