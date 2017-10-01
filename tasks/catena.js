@@ -53,7 +53,11 @@ function isInvalidFile (file, stats) {
  */
 
 function buildFileList (grunt, task) {
-    if (!grunt.file.isDir(task.data.src) || typeof task.data.dest !== 'string') { return undefined; }
+    if (typeof task.data.src !== 'string' || typeof task.data.dest !== 'string') {
+        return undefined;
+    } else if (!grunt.file.isDir(task.data.src)) {
+        return undefined;
+    }
 
     // recursive-readdir is asynchronous.
     var done = task.async();
@@ -127,7 +131,7 @@ function concat (grunt, task, files) {
  */
 
 function license (grunt, task) {
-    if (!grunt.file.isFile(task.data.license)) { return undefined; }
+    if (typeof task.data.license !== 'string' || !grunt.file.isFile(task.data.license)) { return undefined; }
 
     var destFile = grunt.file.read(task.data.dest);
     var licenseFile = grunt.file.read(task.data.license);
