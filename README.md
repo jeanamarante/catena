@@ -46,11 +46,11 @@ Basic chess game that shows the correct way to use catena. [Click here for demo 
 // Project configuration.
 grunt.config.init({
 	catena: {
-		src: 'modules',
-		dest: 'dist/app.js',
-		watch: true,
-		externs: ['BLITTER', 'YUI', 'jQuery', 'd3'],
-        license: 'legal/license.txt'
+            src: 'modules',
+            dest: 'dist/app.js',
+            watch: true,
+            externs: ['BLITTER', 'YUI', 'jQuery', 'd3'],
+            license: 'legal/license.txt'
 	}
 });
 ```
