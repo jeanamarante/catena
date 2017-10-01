@@ -136,7 +136,13 @@ function license (grunt, task) {
     var destFile = grunt.file.read(task.data.dest);
     var licenseFile = grunt.file.read(task.data.license);
 
-    grunt.file.write(task.data.dest, licenseFile + '\x0A' + destFile);
+    var content = '';
+    content += '/****************************************'
+    content += '\x0A' + licenseFile + '\x0A';
+    content += '****************************************/';
+    content += '\x0A\x0A\x0A' + destFile;
+
+    grunt.file.write(task.data.dest, content);
 }
 
 /**
