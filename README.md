@@ -79,7 +79,7 @@ List of globally exposed components (libraries, frameworks, etc.) that must be d
 
 _When working with external libraries in catena, you should access properties and invoke methods using string literals. This will prevent the closure compiler from minifying property names for external modules. The closure compiler is set to use ADVANCED_COMPILATION always, by using string literals the compiler will leave names as they are._
 
-```
+```js
 // Wrong
 BLITTER.getImageData('test-icon');
 
