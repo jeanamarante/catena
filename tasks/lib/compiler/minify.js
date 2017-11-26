@@ -39,8 +39,13 @@ function parseDestFile (grunt, task) {
     });
 
     // Match _$_.Module
-    file = file.replace(/\_\$\_\s*\.\s*([A-Za-z0-9-_]*)/g, function (match, $1) {
+    file = file.replace(/_\$_\s*\.\s*([A-Za-z0-9-_]*)/g, function (match, $1) {
         return "_$_['" + moduleNames[$1] + "']";
+    });
+
+    // Remove tampered CLASS and _$_ references inside of strings to prevent parsing errors.
+    file = file.replace(/'.*'/g, function (match) {
+        return match.replace(/(CLASS|_\$_)\['[A-Za-z0-9-_]*'\]/g, '');
     });
 
     grunt.file.write(compilePath, file);
