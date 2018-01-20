@@ -356,7 +356,7 @@ _throwArgumentError(name: String, type: String, module: Object, index: Number);_
 
 &nbsp;
 
-##### isNaN,&nbsp; isNull,&nbsp; isArray,&nbsp; isObject,&nbsp; isNumber,&nbsp; isString,&nbsp; isBoolean,&nbsp; isFunction,&nbsp; isInstance,&nbsp; isUndefined,&nbsp; isEmptyArray,&nbsp; isEmptyString
+##### isNaN,&nbsp; isNull,&nbsp; isArray,&nbsp; isEmptyArray,&nbsp; isNonEmptyArray,&nbsp; isObject,&nbsp; isNumber,&nbsp; isString,&nbsp; isEmptyString,&nbsp; isNonEmptyString,&nbsp; isBoolean,&nbsp; isFunction,&nbsp; isInstance,&nbsp; isUndefined
 
 Collection of functions for data type checking.
 
