@@ -834,14 +834,16 @@ const extend = function (parentName, childName) {
  * @function isNaN
  * @function isNull
  * @function isArray
+ * @function isEmptyArray
+ * @function isNonEmptyArray
  * @function isObject
  * @function isNumber
  * @function isString
+ * @function isEmptyString
+ * @function isNonEmptyString
  * @function isBoolean
  * @function isFunction
  * @function isUndefined
- * @function isEmptyArray
- * @function isEmptyString
  * @param {*} arg
  * @return Boolean
  * @api public
@@ -859,16 +861,32 @@ const isArray = function (arg) {
     return Array.isArray(arg);
 };
 
+const isEmptyArray = function (arg) {
+    return isArray(arg) && arg.length === 0;
+};
+
+const isNonEmptyArray = function (arg) {
+    return isArray(arg) && arg.length > 0;
+};
+
 const isObject = function (arg) {
-    return arg !== null && !isArray(arg) && typeof arg === 'object';
+    return !isNull(arg) && !isArray(arg) && typeof arg === 'object';
 };
 
 const isNumber = function (arg) {
-    return !Number.isNaN(arg) && typeof arg === 'number';
+    return !isNaN(arg) && typeof arg === 'number';
 };
 
 const isString = function (arg) {
     return typeof arg === 'string';
+};
+
+const isEmptyString = function (arg) {
+    return arg === '';
+};
+
+const isNonEmptyString = function (arg) {
+    return isString(arg) && !isEmptyString(arg);
 };
 
 const isBoolean = function (arg) {
@@ -881,14 +899,6 @@ const isFunction = function (arg) {
 
 const isUndefined = function (arg) {
     return arg === undefined;
-};
-
-const isEmptyArray = function (arg) {
-    return isArray(arg) && arg.length === 0;
-};
-
-const isEmptyString = function (arg) {
-    return arg === '';
 };
 
 /**
@@ -930,18 +940,14 @@ const testArray = function (arg, argName, module, errorIndex) {
 };
 
 const testEmptyArray = function (arg, argName, module, errorIndex) {
-    testArray(arg, argName, module, errorIndex);
-
     if (!isEmptyArray(arg)) {
         throwError(argName + ' has to be empty array.', 'ARG', module, errorIndex);
     }
 };
 
 const testNonEmptyArray = function (arg, argName, module, errorIndex) {
-    testArray(arg, argName, module, errorIndex);
-
-    if (isEmptyArray(arg)) {
-        throwError(argName + ' cannot be empty array.', 'ARG', module, errorIndex);
+    if (!isNonEmptyArray(arg)) {
+        throwError(argName + ' has to be non empty array.', 'ARG', module, errorIndex);
     }
 };
 
@@ -964,18 +970,14 @@ const testString = function (arg, argName, module, errorIndex) {
 };
 
 const testEmptyString = function (arg, argName, module, errorIndex) {
-    testString(arg, argName, module, errorIndex);
-
     if (!isEmptyString(arg)) {
         throwError(argName + ' has to be empty string.', 'ARG', module, errorIndex);
     }
 };
 
 const testNonEmptyString = function (arg, argName, module, errorIndex) {
-    testString(arg, argName, module, errorIndex);
-
-    if (isEmptyString(arg)) {
-        throwError(argName + ' cannot be empty string.', 'ARG', module, errorIndex);
+    if (!isNonEmptyString(arg)) {
+        throwError(argName + ' has to be non empty string.', 'ARG', module, errorIndex);
     }
 };
 
