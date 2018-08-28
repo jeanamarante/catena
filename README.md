@@ -22,6 +22,9 @@ grunt.loadNpmTasks('catena');
 &nbsp;
 
 ## Task
+
+_**You must have the java command line tool installed so the google-closure-compiler npm module doesn't error out when deploying.**_
+
 _Run this task with the_ `grunt catena` _command._
 
 Task targets, files and options may be specified according to the Grunt [Configuring tasks](http://gruntjs.com/configuring-tasks) guide.
@@ -59,8 +62,6 @@ grunt.config.init({
 
 Run task with deploy argument `grunt catena:deploy` to minify dest file.
 
-_You must have the java command line tool installed so the google-closure-compiler npm module doesn't error out when deploying._
-
 #### src
 
 Path to directory where all of the Javascript files will be recursively searched and concatenated into a single file.
@@ -71,11 +72,13 @@ Path to concatenated Javascript file.
 
 #### watch
 
-Set watch to true to run the catena task every time you change a file in the src directory. Watch never runs when deploying.
+Set watch to true to run the catena task every time you change a file in the src directory. If deploy argument `grunt catena:deploy` is used watch will not run.
+
+You can also run task with without_watch argument `grunt catena:without_watch` to forcibly prevent watch from running (useful when doing quick dev builds).
 
 #### externs
 
-List of globally exposed components (libraries, frameworks, etc.) that must be declared to prevent the closure compiler from throwing an error when deploying.
+List of globally exposed dependencies (libraries, frameworks, etc.) that prevent the closure compiler from throwing an error when minifying.
 
 _When working with external libraries in catena, you should access properties and invoke methods using string literals. This will prevent the closure compiler from minifying property names for external modules. The closure compiler is set to use ADVANCED_COMPILATION always, by using string literals the compiler will leave names as they are._
 
