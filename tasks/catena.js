@@ -63,9 +63,10 @@ function buildFileList (grunt, task, taskData) {
     var files = [];
 
     // Start wrap.
-    files.push(path.join(clientSideDir, 'init.js'));
+    files.push(path.join(clientSideDir, 'wrapper-start.js'));
     files.push(writeDevFile(grunt));
     files.push(path.join(clientSideDir, 'dependencies.js'));
+    files.push(path.join(clientSideDir, 'class-methods.js'));
     files.push(path.join(clientSideDir, 'utility-functions.js'));
 
     // recursive-readdir is asynchronous.
@@ -84,7 +85,7 @@ function buildFileList (grunt, task, taskData) {
         files = files.concat(srcFiles);
 
         // End wrap.
-        files.push(path.join(clientSideDir, 'end.js'));
+        files.push(path.join(clientSideDir, 'wrapper-end.js'));
 
         concat(grunt, task, taskData, files);
     });

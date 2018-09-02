@@ -110,24 +110,30 @@ const traceCallFromErrorStack = function (module, index) {
  * @api public
  */
 
-const throwError = function (message, type, module, index) {
-    if ($loading) {
-        $errorThrown = true;
+const throwError = (function () {
+    if ($development) {
+        return function (message, type, module, index) {
+            if ($loading === true) {
+                $errorThrown = true;
+            }
+
+            message = isString(message) ? message : '';
+
+            // Default to ERROR if not a string or empty string.
+            type = isString(type) && !isEmptyString(type) ? type : 'ERROR';
+
+            // type is wrapped around curly brackets and is uppercase.
+            type = '{ ' + type.toUpperCase() + ' } ';
+
+            var call = traceCallFromErrorStack(module, index);
+            var calledModule = !isEmptyString(call) ? ' Module: ' + call : '';
+
+            throw new Error(type + message + calledModule);
+        };
+    } else {
+        return function (message, type, module, index) {};
     }
-
-    message = isString(message) ? message : '';
-
-    // Default to ERROR if not a string or empty string.
-    type = isString(type) && !isEmptyString(type) ? type : 'ERROR';
-
-    // type is wrapped around curly brackets and is uppercase.
-    type = '{ ' + type.toUpperCase() + ' } ';
-
-    var call = traceCallFromErrorStack(module, index);
-    var calledModule = !isEmptyString(call) ? ' Module: ' + call : '';
-
-    throw new Error(type + message + calledModule);
-};
+})();
 
 /**
  * Throw pretty argument error messages.
@@ -153,39 +159,43 @@ const throwArgumentError = function (name, type, module, index) {
  * @api public
  */
 
-const extend = function (parentName, childName) {
+const extend = (function () {
     if ($development) {
-        var invalidChild = !isString(childName);
-        var invalidParent = !isString(parentName);
+        return function (parentName, childName) {
+            if (isUndefined($loading)) {
+                throwError('Prohibited to invoke extend after Main has been initialized.', 'EXTEND');
+            }
 
-        if (invalidParent && invalidChild) {
-            throwError('parentName and childName must be [String]', 'EXTEND');
-        }
+            var invalidChild = !isString(childName);
+            var invalidParent = !isString(parentName);
 
-        if (invalidParent) {
-            throwError('parentName for child ' + childName + ' module must be [String]', 'EXTEND');
-        }
+            if (invalidParent && invalidChild) {
+                throwError('parentName and childName must be [String]', 'EXTEND');
+            }
 
-        if (invalidChild) {
-            throwError('childName for parent ' + parentName + ' module must be [String]', 'EXTEND');
-        }
+            if (invalidParent) {
+                throwError('parentName for child ' + childName + ' module must be [String]', 'EXTEND');
+            }
 
-        if (parentName === childName) {
-            throwError('parentName and childName cannot share the same name: ' + parentName , 'EXTEND');
-        }
+            if (invalidChild) {
+                throwError('childName for parent ' + parentName + ' module must be [String]', 'EXTEND');
+            }
 
-        // Do not allow child to inherit from more than one parent.
-        if ($hierarchy.hasParent(childName)) {
-            throwError(childName + ' cannot extend ' + parentName + ' as it is already extending the ' + $hierarchy.getParent(childName) + ' module.', 'EXTEND');
-        }
+            if (parentName === childName) {
+                throwError('parentName and childName cannot share the same name: ' + parentName , 'EXTEND');
+            }
+
+            // Do not allow child to inherit from more than one parent.
+            if ($hierarchy.hasParent(childName)) {
+                throwError(childName + ' cannot extend ' + parentName + ' as it is already extending the ' + $hierarchy.getParent(childName) + ' module.', 'EXTEND');
+            }
+
+            $hierarchy.link(parentName, childName);
+        };
+    } else {
+        return function (parentName, childName) {};
     }
-
-    if (isUndefined($loading)) {
-        throwError('Prohibited to invoke extend after Main has been initialized.', 'EXTEND');
-    }
-
-    $hierarchy.link(parentName, childName);
-};
+})();
 
 /**
  * Validate data type.
