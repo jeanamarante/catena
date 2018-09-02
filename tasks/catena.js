@@ -75,8 +75,9 @@ function buildFileList (grunt, task, taskData) {
         // Finish recursive-addir.
         done();
 
+        // Solve dependencies ahead of time before minifying when deploying.
         if (deploying) {
-            srcFiles = require('./lib/compiler/dependencies.js')(grunt, srcFiles);
+            srcFiles = require('./lib/compile/dependencies.js')(grunt, srcFiles);
         }
 
         // All Javascript files in src directory.
@@ -113,7 +114,7 @@ function concat (grunt, task, taskData, files) {
     // Minify and license dest file after concatening it when deploying.
     if (deploying) {
         grunt.registerTask('minify:catena', '', function () {
-            require('./lib/compiler/minify.js')(grunt, task, taskData, tmpDir);
+            require('./lib/compile/minify.js')(grunt, task, taskData, tmpDir);
         });
 
         grunt.registerTask('license:catena', '', function () {
