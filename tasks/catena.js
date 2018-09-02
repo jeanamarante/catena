@@ -1,10 +1,10 @@
 var path = require('path');
 var tmpDir = path.resolve(__dirname, 'tmp/');
-var wrapperDir = path.resolve(__dirname, 'lib/wrapper/');
+var clientSideDir = path.resolve(__dirname, 'lib/client-side/');
 
 // Task arguments.
-var withWatch = false;
-var isDeploying = false;
+var deploying = false;
+var withoutWatch = false;
 
 /**
  * Write a file that declares if application is in development mode.
@@ -18,8 +18,8 @@ var isDeploying = false;
 function writeDevFile (grunt) {
     var filePath = path.join(tmpDir, 'dev.js');
 
-    // Set $development to false if isDeploying is true.
-    grunt.file.write(filePath, 'var $development = ' + String(!isDeploying) + ';\x0A');
+    // Set $development to false if deploying is true.
+    grunt.file.write(filePath, 'var $development = ' + String(!deploying) + ';\x0A');
 
     return filePath;
 }
@@ -49,36 +49,43 @@ function isInvalidFile (file, stats) {
  * @function buildFileList
  * @param {Object} grunt
  * @param {Object} task
+ * @param {Object} taskData
  * @api private
  */
 
-function buildFileList (grunt, task) {
-    if (typeof task.data.src !== 'string' || typeof task.data.dest !== 'string') {
+function buildFileList (grunt, task, taskData) {
+    if (typeof taskData.src !== 'string' || typeof taskData.dest !== 'string') {
         return undefined;
-    } else if (!grunt.file.isDir(task.data.src)) {
+    } else if (!grunt.file.isDir(taskData.src)) {
         return undefined;
     }
 
-    // recursive-readdir is asynchronous.
-    var done = task.async();
     var files = [];
 
     // Start wrap.
-    files.push(path.join(wrapperDir, 'init.js'));
+    files.push(path.join(clientSideDir, 'init.js'));
     files.push(writeDevFile(grunt));
-    files.push(path.join(wrapperDir, 'dependency.js'));
+    files.push(path.join(clientSideDir, 'dependencies.js'));
+    files.push(path.join(clientSideDir, 'utility-functions.js'));
 
-    require('recursive-readdir')(task.data.src, [isInvalidFile], function (err, srcFiles) {
+    // recursive-readdir is asynchronous.
+    var done = task.async();
+
+    require('recursive-readdir')(taskData.src, [isInvalidFile], function (err, srcFiles) {
         // Finish recursive-addir.
         done();
+
+        if (deploying) {
+            srcFiles = require('./lib/compiler/dependencies.js')(grunt, srcFiles);
+        }
 
         // All Javascript files in src directory.
         files = files.concat(srcFiles);
 
         // End wrap.
-        files.push(path.join(wrapperDir, 'final.js'));
+        files.push(path.join(clientSideDir, 'end.js'));
 
-        concat(grunt, task, files);
+        concat(grunt, task, taskData, files);
     });
 }
 
@@ -88,28 +95,29 @@ function buildFileList (grunt, task) {
  * @function concat
  * @param {Object} grunt
  * @param {Object} task
+ * @param {Object} taskData
  * @param {Array} files
  * @api private
  */
 
-function concat (grunt, task, files) {
+function concat (grunt, task, taskData, files) {
     if (!grunt.task.exists('concat')) {
         grunt.loadNpmTasks('grunt-contrib-concat');
     }
 
     grunt.config('concat.catena', {
         src: files,
-        dest: task.data.dest
+        dest: taskData.dest
     });
 
     // Minify and license dest file after concatening it when deploying.
-    if (isDeploying) {
+    if (deploying) {
         grunt.registerTask('minify:catena', '', function () {
-            require('./lib/compiler/minify.js')(grunt, task);
+            require('./lib/compiler/minify.js')(grunt, task, taskData, tmpDir);
         });
 
         grunt.registerTask('license:catena', '', function () {
-            license(grunt, task);
+            license(grunt, task, taskData);
         });
 
         grunt.task.run('concat:catena', 'minify:catena', 'license:catena');
@@ -117,7 +125,7 @@ function concat (grunt, task, files) {
     } else {
         grunt.task.run('concat:catena');
 
-        watch(grunt, task);
+        watch(grunt, task, taskData);
     }
 }
 
@@ -127,23 +135,24 @@ function concat (grunt, task, files) {
  * @function license
  * @param {Object} grunt
  * @param {Object} task
+ * @param {Object} taskData
  * @api private
  */
 
-function license (grunt, task) {
-    if (typeof task.data.license !== 'string' || !grunt.file.isFile(task.data.license)) { return undefined; }
+function license (grunt, task, taskData) {
+    if (typeof taskData.license !== 'string' || !grunt.file.isFile(taskData.license)) { return undefined; }
 
-    var destFile = grunt.file.read(task.data.dest);
-    var licenseFile = grunt.file.read(task.data.license);
+    var destFile = grunt.file.read(taskData.dest);
+    var licenseFile = grunt.file.read(taskData.license);
 
     // Prepend content read from license file as multi-line comment.
     var content = '';
-    content += '/****************************************'
+    content += '/****************************************';
     content += '\x0A' + licenseFile + '\x0A';
     content += '****************************************/';
     content += '\x0A\x0A\x0A' + destFile;
 
-    grunt.file.write(task.data.dest, content);
+    grunt.file.write(taskData.dest, content);
 }
 
 /**
@@ -152,20 +161,21 @@ function license (grunt, task) {
  * @function watch
  * @param {Object} grunt
  * @param {Object} task
+ * @param {Object} taskData
  * @api private
  */
 
-function watch (grunt, task) {
+function watch (grunt, task, taskData) {
     // No need to run watch if application is being deployed or already being watched.
-    if (!Boolean(task.data.watch) || withWatch || isDeploying) { return undefined; }
+    if (!Boolean(taskData.watch) || withoutWatch || deploying) { return undefined; }
 
     if (!grunt.task.exists('watch')) {
         grunt.loadNpmTasks('grunt-contrib-watch');
     }
 
     grunt.config('watch.catena', {
-        files: path.join(task.data.src, '**/*.js'),
-        tasks: ['catena:with_watch'],
+        files: path.join(taskData.src, '**/*.js'),
+        tasks: ['catena:without_watch'],
         options: {
             spawn: false,
             interval: 1000
@@ -177,12 +187,9 @@ function watch (grunt, task) {
 
 module.exports = function (grunt) {
     grunt.registerTask('catena', function () {
-        withWatch = this.args.indexOf('with_watch') !== -1;
-        isDeploying = this.args.indexOf('deploy') !== -1;
+        deploying = this.args.indexOf('deploy') !== -1;
+        withoutWatch = this.args.indexOf('without_watch') !== -1;
 
-        // Treat catena as a subtask.
-        this.data = grunt.config.get('catena');
-
-        buildFileList(grunt, this);
+        buildFileList(grunt, this, grunt.config.get('catena'));
     });
 };

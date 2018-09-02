@@ -15,8 +15,8 @@ var moduleNames = {};
  * @api private
  */
 
-function parseDestFile (grunt, task) {
-    var file = grunt.file.read(task.data.dest);
+function parseDestFile (grunt, task, taskData) {
+    var file = grunt.file.read(taskData.dest);
 
     // Match CLASS.Module
     file = file.replace(/CLASS\s*\.\s*([A-Za-z0-9-_]+)/g, function (match, $1) {
@@ -67,18 +67,18 @@ function writeExternsFile (grunt, task) {
 
     // SINGLE container and properties.
     file += 'var SINGLE = {};';
-    file += 'SINGLE.$name = "";';
-    file += 'SINGLE.$isSingle = true;';
+    // file += 'SINGLE.$name = "";';
+    // file += 'SINGLE.$isSingle = true;';
     file += 'SINGLE.init = function () {};';
     file += 'SINGLE.postInit = function () {};';
 
     // CLASS container and properties.
     file += 'var CLASS = {};';
-    file += 'CLASS.$name = "";';
-    file += 'CLASS.$isClass = true;';
-    file += 'CLASS.$applied = true;';
-    file += 'CLASS.$parentName = "";';
-    file += 'CLASS.append = {};';
+    // file += 'CLASS.$name = "";';
+    // file += 'CLASS.$isClass = true;';
+    // file += 'CLASS.$applied = true;';
+    // file += 'CLASS.$parentName = "";';
+    // file += 'CLASS.append = {};';
     file += 'CLASS.super = function () {};';
     file += 'CLASS.abstract = function () {};';
 
@@ -95,8 +95,8 @@ function writeExternsFile (grunt, task) {
  * @api private
  */
 
-function stringifyExternsData (grunt, task) {
-    var arr = task.data.externs;
+function stringifyExternsData (grunt, task, taskData) {
+    var arr = taskData.externs;
 
     if (!Array.isArray(arr)) { return ''; }
 
@@ -109,14 +109,12 @@ function stringifyExternsData (grunt, task) {
     return content;
 }
 
-module.exports = function (grunt, task) {
-    var tmpDir = path.resolve(__dirname, '../../tmp/');
-
+module.exports = function (grunt, task, taskData, tmpDir) {
     compilePath = path.join(tmpDir, 'compile.js');
     externsPath = path.join(tmpDir, 'externs.js');
 
-    parseDestFile(grunt, task);
-    writeExternsFile(grunt, task);
+    parseDestFile(grunt, task, taskData);
+    writeExternsFile(grunt, task, taskData);
 
     closureCompiler.grunt(grunt);
 
@@ -128,7 +126,7 @@ module.exports = function (grunt, task) {
                         '--js', compilePath,
                         '--externs', externsPath,
                         '--warning_level', 'QUIET',
-                        '--js_output_file', task.data.dest,
+                        '--js_output_file', taskData.dest,
                         '--compilation_level', 'ADVANCED'
                     ]
                 }
