@@ -1,3 +1,6 @@
+// Pointer to all CLASS module prototypes.
+const _$_ = $development ? {} : undefined;
+
 // Is catena still loading dependencies?
 var $loading = true;
 

@@ -6,9 +6,6 @@ const CLASS = {};
 const CONST = {}; // Constants
 const SINGLE = {}; // Singletons
 
-// Pointer to all CLASS module prototypes.
-const _$_ = $development ? {} : undefined;
-
 window.addEventListener('load', function (e) {
     // Do not run callback for load event if an error has
     // been thrown while loading.
