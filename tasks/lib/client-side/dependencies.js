@@ -120,7 +120,7 @@ var $solveDependencies = function () {
     // Always append CLASS modules before SINGLE modules.
     // CLASS modules should be instantiable inside the init
     // method of SINGLE modules.
-    $appendSuperClasses();
+    $appendRootClasses();
     $appendSingles();
 
     // Alter CLASS.Main constructor after solving all dependencies.
@@ -238,11 +238,11 @@ var $checkClassStructures = function () {
 /**
  * Append all top level modules.
  *
- * @function appendSuperClasses
+ * @function appendRootClasses
  * @api internal
  */
 
-var $appendSuperClasses = function () {
+var $appendRootClasses = function () {
     if (!$development) { return undefined; }
 
     var keys = Object.keys(CLASS);

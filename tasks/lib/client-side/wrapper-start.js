@@ -36,7 +36,7 @@ window.addEventListener('load', function (e) {
     $checkMain = undefined;
     $checkClassLinks = undefined;
     $checkClassStructures = undefined;
-    $appendSuperClasses = undefined;
+    $appendRootClasses = undefined;
     $appendClass = undefined;
     $linkClassPrototypes = undefined;
     $appendChildClasses = undefined;
