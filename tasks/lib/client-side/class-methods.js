@@ -6,6 +6,20 @@
  */
 
 $descriptor.value = (function () {
+    if (!$development) {
+        var nodePrototype = null;
+
+        return function () {
+            if (isNull(nodePrototype)) {
+                nodePrototype = this.$parentPrototype;
+            }
+
+            nodePrototype.constructor.apply(this, Array.prototype.slice.call(arguments));
+
+            nodePrototype = nodePrototype.$parentPrototype;
+        };
+    }
+
     var nodeName = ''; // Next parent in chain.
     var rootName = ''; // First child in chain.
     var descriptor = $descriptor;
@@ -98,21 +112,27 @@ Object.defineProperty($rootClassProto.prototype, 'super', $descriptor);
  * @api public
  */
 
-$descriptor.value = function () {
-    var call = traceCallFromErrorStack(this, 1).split('.');
-    var message = '';
+$descriptor.value = (function () {
+    if ($development) {
+        return function () {
+            var call = traceCallFromErrorStack(this, 1).split('.');
+            var message = '';
 
-    // abstract can only be invoked inside the methods of CLASS module instances.
-    if (this.$name !== call[0]) {
-        message = 'Cannot invoke abstract directly from ' + this.$name + ' instance.';
-    } else if (call.length === 1) {
-        message = 'Cannot invoke abstract inside a constructor.';
+            // abstract can only be invoked inside the methods of CLASS module instances.
+            if (this.$name !== call[0]) {
+                message = 'Cannot invoke abstract directly from ' + this.$name + ' instance.';
+            } else if (call.length === 1) {
+                message = 'Cannot invoke abstract inside a constructor.';
+            } else {
+                message = 'Invoked method is meant to be overwritten.';
+            }
+
+            throwError(message, 'ABSTRACT', this, 1);
+        };
     } else {
-        message = 'Invoked method is meant to be overwritten.';
+        return function () {};
     }
-
-    throwError(message, 'ABSTRACT', this, 1);
-};
+})();
 
 Object.defineProperty($rootClassProto.prototype, 'abstract', $descriptor);
 

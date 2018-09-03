@@ -23,84 +23,90 @@ var $descriptor = {
 var $singlePostInitModules = [];
 
 // Stores the links between parent and child modules.
-var $hierarchy = {
-    parents: {},
-    children: {},
+var $hierarchy = (function () {
+    if ($development) {
+        return {
+            parents: {},
+            children: {},
 
-    /**
-     * Create parent child links.
-     *
-     * @function link
-     * @param {String} parentName
-     * @param {String} childName
-     * @api public
-     */
+            /**
+             * Create parent child links.
+             *
+             * @function link
+             * @param {String} parentName
+             * @param {String} childName
+             * @api public
+             */
 
-    link: function (parentName, childName) {
-        var arr = this.children[parentName];
+            link: function (parentName, childName) {
+                var arr = this.children[parentName];
 
-        // If parent has not been referenced, create new array.
-        if (isUndefined(arr)) {
-            this.children[parentName] = [childName];
-        } else {
-            arr.push(childName);
-        }
+                // If parent has not been referenced, create new array.
+                if (isUndefined(arr)) {
+                    this.children[parentName] = [childName];
+                } else {
+                    arr.push(childName);
+                }
 
-        this.parents[childName] = parentName;
-    },
+                this.parents[childName] = parentName;
+            },
 
-    /**
-     * @function hasParent
-     * @return {Boolean}
-     * @api public
-     */
+            /**
+             * @function hasParent
+             * @return {Boolean}
+             * @api public
+             */
 
-    hasParent: function (childName) {
-        return !isUndefined(this.parents[childName]);
-    },
+            hasParent: function (childName) {
+                return !isUndefined(this.parents[childName]);
+            },
 
-    /**
-     * @function hasChildren
-     * @return {Boolean}
-     * @api public
-     */
+            /**
+             * @function hasChildren
+             * @return {Boolean}
+             * @api public
+             */
 
-    hasChildren: function (parentName) {
-        return !isUndefined(this.children[parentName]);
-    },
+            hasChildren: function (parentName) {
+                return !isUndefined(this.children[parentName]);
+            },
 
-    /**
-     * @function getParent
-     * @param {String} childName
-     * @return {String}
-     * @api public
-     */
+            /**
+             * @function getParent
+             * @param {String} childName
+             * @return {String}
+             * @api public
+             */
 
-    getParent: function (childName) {
-        return this.hasParent(childName) ? this.parents[childName] : '';
-    },
+            getParent: function (childName) {
+                return this.hasParent(childName) ? this.parents[childName] : '';
+            },
 
-    /**
-     * @function getChildren
-     * @param {String} parentName
-     * @return {Array}
-     * @api public
-     */
+            /**
+             * @function getChildren
+             * @param {String} parentName
+             * @return {Array}
+             * @api public
+             */
 
-    getChildren: function (parentName) {
-        return this.hasChildren(parentName) ? this.children[parentName] : [];
-    },
+            getChildren: function (parentName) {
+                return this.hasChildren(parentName) ? this.children[parentName] : [];
+            },
 
-    /**
-     * @function getAllChildren
-     * @return {Array}
-     * @api public
-     */
+            /**
+             * @function getAllChildren
+             * @return {Array}
+             * @api public
+             */
 
-    getAllChildren: function () {
-        return Object.keys(this.parents);
+            getAllChildren: function () {
+                return Object.keys(this.parents);
+            }
+        };
+    } else {
+        return undefined;
     }
-};
+})();
 
 /**
  * @function solveDependencies

@@ -20,53 +20,59 @@ const clampErrorStackIndex = function (index) {
  * @api public
  */
 
-const traceErrorStack = function (log) {
-    var e = new Error('');
-    var clean = [];
-    var stack = e.stack;
+const traceErrorStack = (function () {
+    if ($development) {
+        return function (log) {
+            var e = new Error('');
+            var clean = [];
+            var stack = e.stack;
 
-    // SINGLE modules might get picked as normal objects in error stack.
-    // So check for Object in first capture group and assume it is a SINGLE.
-    // Regex Capture Examples:
-    // (TYPE).(Module)(.method)
-    // (CLASS).(ErrorStacker)
-    // (CLASS).(ErrorStacker).append(.trace)
-    // (SINGLE).(ErrorStacker)(.trace)
-    // (Object).(trace)
-    var regex = /(CLASS|SINGLE|Object)\.([\w]+)(?:\.append)?(\.[\w]+)?/g;
-    var result = regex.exec(stack);
+            // SINGLE modules might get picked as normal objects in error stack.
+            // So check for Object in first capture group and assume it is a SINGLE.
+            // Regex Capture Examples:
+            // (TYPE).(Module)(.method)
+            // (CLASS).(ErrorStacker)
+            // (CLASS).(ErrorStacker).append(.trace)
+            // (SINGLE).(ErrorStacker)(.trace)
+            // (Object).(trace)
+            var regex = /(CLASS|SINGLE|Object)\.([\w]+)(?:\.append)?(\.[\w]+)?/g;
+            var result = regex.exec(stack);
 
-    while (!isNull(result)) {
-        var first = result[1];
-        var second = result[2];
-        // The third capture group might return undefined.
-        var third = isString(result[3]) ? result[3] : '';
+            while (!isNull(result)) {
+                var first = result[1];
+                var second = result[2];
+                // The third capture group might return undefined.
+                var third = isString(result[3]) ? result[3] : '';
 
-        // SINGLEs in stack print as Object. Object will be changed
-        // to the name of the SINGLE module provided as an argument
-        // in the traceCallFromErrorStack function.
-        if (first === 'Object') {
-            clean.push(first + '.' + second);
+                // SINGLEs in stack print as Object. Object will be changed
+                // to the name of the SINGLE module provided as an argument
+                // in the traceCallFromErrorStack function.
+                if (first === 'Object') {
+                    clean.push(first + '.' + second);
 
-        // Otherwise do not show module type in stack.
-        } else {
-            // '.CLASS' will be captured as method if error is thrown in
-            // the constructor of a CLASS module while invoking super.
-            // Example: (CLASS).(Child)(.CLASS).Parent
-            if (third === '.CLASS') {
-                clean.push(second);
-            } else {
-                clean.push(second + third);
+                // Otherwise do not show module type in stack.
+                } else {
+                    // '.CLASS' will be captured as method if error is thrown in
+                    // the constructor of a CLASS module while invoking super.
+                    // Example: (CLASS).(Child)(.CLASS).Parent
+                    if (third === '.CLASS') {
+                        clean.push(second);
+                    } else {
+                        clean.push(second + third);
+                    }
+                }
+
+                result = regex.exec(stack);
             }
-        }
 
-        result = regex.exec(stack);
+            if (Boolean(log)) { console.log(stack); }
+
+            return clean;
+        };
+    } else {
+        return function (log) { return []; };
     }
-
-    if (Boolean(log)) { console.log(stack); }
-
-    return clean;
-};
+})();
 
 /**
  * Get call in error stack.
@@ -78,26 +84,32 @@ const traceErrorStack = function (log) {
  * @api public
  */
 
-const traceCallFromErrorStack = function (module, index) {
-    index = clampErrorStackIndex(index);
+const traceCallFromErrorStack = (function () {
+    if ($development) {
+        return function (module, index) {
+            index = clampErrorStackIndex(index);
 
-    var stack = traceErrorStack(false);
-    var call = stack[index];
+            var stack = traceErrorStack(false);
+            var call = stack[index];
 
-    // Return empty string if out of bounds.
-    if (isUndefined(call)) {
-        return '';
+            // Return empty string if out of bounds.
+            if (isUndefined(call)) {
+                return '';
+            } else {
+                var names = call.split('.');
+
+                // Change Object to single module's name.
+                if (names[0] === 'Object' && isObject(module) && module.$isSingle) {
+                    call = module.$name + '.' + names[1];
+                }
+
+                return call;
+            }
+        };
     } else {
-        var names = call.split('.');
-
-        // Change Object to single module's name.
-        if (names[0] === 'Object' && isObject(module) && module.$isSingle) {
-            call = module.$name + '.' + names[1];
-        }
-
-        return call;
+        return function (module, index) { return ''; };
     }
-};
+})();
 
 /**
  * Throw error, all arguments are optional.
