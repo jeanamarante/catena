@@ -36,7 +36,6 @@ function parseClassExtend (content, absPath) {
 
     hierarchy[parentName].children.push(childName);
 
-    hierarchy[childName].parent = parentName;
     hierarchy[childName].absPath = absPath;
 
     return true;
