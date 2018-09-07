@@ -66,7 +66,7 @@ function buildFileList (grunt, task, taskData) {
     files.push(path.join(clientSideDir, 'wrapper-start.js'));
     files.push(writeDevFile(grunt));
     files.push(path.join(clientSideDir, 'dependencies.js'));
-    files.push(path.join(clientSideDir, 'class-methods.js'));
+    files.push(path.join(clientSideDir, 'class-properties.js'));
     files.push(path.join(clientSideDir, 'utility-functions.js'));
 
     // recursive-readdir is asynchronous.
