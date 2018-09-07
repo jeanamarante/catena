@@ -112,7 +112,7 @@ function concat (grunt, task, taskData, files) {
         dest: taskData.dest
     });
 
-    // Minify and license dest file after concatening it when deploying.
+    // Minify dest file and prepend license file content to dest file after concatening it when deploying.
     if (deploying) {
         grunt.registerTask('minify:catena', '', function () {
             require('./lib/compile/minify.js')(grunt, task, taskData, tmpDir);
