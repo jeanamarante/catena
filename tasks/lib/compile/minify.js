@@ -1,88 +1,47 @@
 var path = require('path');
-var nameGenerator = require('./name-generator.js');
 var closureCompiler = require('google-closure-compiler');
 
 var compilePath = '';
 var externsPath = '';
-var moduleNames = {};
 
 /**
- * Parse dest file and mangle all CLASS module names.
+ * Parse and normalize all CLASS modules to temporary dest file.
  *
- * @function parseDestFile
+ * @function writeTmpDestFile
  * @param {Object} grunt
  * @param {Object} task
+ * @param {Object} taskData
  * @api private
  */
 
-function parseDestFile (grunt, task, taskData) {
-    var file = grunt.file.read(taskData.dest);
-
-    // Match CLASS.Module
-    file = file.replace(/CLASS\s*\.\s*([A-Za-z0-9-_]+)/g, function (match, $1) {
-        // Store mangled name if it has not been matched yet.
-        if (moduleNames[$1] === undefined) {
-            // Main is not mangled.
-            if ($1 === 'Main') {
-                moduleNames[$1] = $1;
-            } else {
-                moduleNames[$1] = nameGenerator.generateName();
-            }
-        }
-
-        return "CLASS['" + moduleNames[$1] + "']";
-    });
-
-    // Match extend('ParentModule', 'ChildModule')
-    file = file.replace(/extend\s*\(\s*['"](.*)['"]\s*,\s*['"](.*)['"]\s*\)/g, function (match, $1, $2) {
-        return "extend('" + moduleNames[$1] + "', '" + moduleNames[$2]  + "')";
-    });
-
-    // Match _$_.Module
-    file = file.replace(/_\$_\s*\.\s*([A-Za-z0-9-_]*)/g, function (match, $1) {
-        return "_$_['" + moduleNames[$1] + "']";
-    });
-
-    // Remove tampered CLASS and _$_ references inside of strings to prevent parsing errors.
-    file = file.replace(/'.*'/g, function (match) {
-        return match.replace(/(CLASS|_\$_)\['[A-Za-z0-9-_]*'\]/g, '');
-    });
-
-    grunt.file.write(compilePath, file);
+function writeTmpDestFile (grunt, task, taskData) {
+    var content = grunt.file.read(taskData.dest);
 }
 
 /**
- * Write file of protected values and properties catena uses.
+ * Write temporary file of external values and properties catena uses.
  *
- * @function writeExternsFile
+ * @function writeTmpExternsFile
  * @param {Object} grunt
  * @param {Object} task
+ * @param {Object} taskData
  * @api private
  */
 
-function writeExternsFile (grunt, task) {
-    var file = '';
-
-    file += stringifyExternsData(grunt, task);
+function writeTmpExternsFile (grunt, task, taskData) {
+    var content = stringifyExternsData(grunt, task, taskData);
 
     // SINGLE container and properties.
-    file += 'var SINGLE = {};';
-    // file += 'SINGLE.$name = "";';
-    // file += 'SINGLE.$isSingle = true;';
-    file += 'SINGLE.init = function () {};';
-    file += 'SINGLE.postInit = function () {};';
+    content += 'var SINGLE = {};';
+    content += 'SINGLE.init = function () {};';
+    content += 'SINGLE.postInit = function () {};';
 
     // CLASS container and properties.
-    file += 'var CLASS = {};';
-    // file += 'CLASS.$name = "";';
-    // file += 'CLASS.$isClass = true;';
-    // file += 'CLASS.$applied = true;';
-    // file += 'CLASS.$parentName = "";';
-    // file += 'CLASS.append = {};';
-    file += 'CLASS.super = function () {};';
-    file += 'CLASS.abstract = function () {};';
+    content += 'var CLASS = {};';
+    content += 'CLASS.super = function () {};';
+    content += 'CLASS.abstract = function () {};';
 
-    grunt.file.write(externsPath, file);
+    grunt.file.write(externsPath, content);
 }
 
 /**
@@ -91,6 +50,7 @@ function writeExternsFile (grunt, task) {
  * @function stringifyExternsData
  * @param {Object} grunt
  * @param {Object} task
+ * @param {Object} taskData
  * @return {String}
  * @api private
  */
@@ -113,8 +73,8 @@ module.exports = function (grunt, task, taskData, tmpDir) {
     compilePath = path.join(tmpDir, 'compile.js');
     externsPath = path.join(tmpDir, 'externs.js');
 
-    parseDestFile(grunt, task, taskData);
-    writeExternsFile(grunt, task, taskData);
+    writeTmpDestFile(grunt, task, taskData);
+    writeTmpExternsFile(grunt, task, taskData);
 
     closureCompiler.grunt(grunt);
 
@@ -125,6 +85,8 @@ module.exports = function (grunt, task, taskData, tmpDir) {
                     args: [
                         '--js', compilePath,
                         '--externs', externsPath,
+                        '--language', 'ECMASCRIPT6_STRICT',
+                        '--language_out', 'ECMASCRIPT6_STRICT',
                         '--warning_level', 'QUIET',
                         '--js_output_file', taskData.dest,
                         '--compilation_level', 'ADVANCED'
@@ -135,7 +97,7 @@ module.exports = function (grunt, task, taskData, tmpDir) {
     });
 
     // Force delete the files google-closure-compiler uses to minify
-    // dest after closure-compiler task is done.
+    // dest file after closure-compiler task is done.
     grunt.registerTask('cleanup:catena', '', function () {
         grunt.option('force', true);
 

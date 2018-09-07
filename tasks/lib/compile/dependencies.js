@@ -1,5 +1,5 @@
-var modules = [];
 var hierarchy = {};
+var nonHierarchicalModules = [];
 
 function createHierarchyNode (parentName, childName) {
     if (hierarchy[childName] !== undefined) { return undefined; }
@@ -19,7 +19,7 @@ function parseFile (grunt, absPath) {
     } else if (parseClass(content, absPath)) {
         return undefined;
     } else {
-        modules.push(absPath);
+        nonHierarchicalModules.push(absPath);
     }
 }
 
@@ -69,8 +69,6 @@ function convertHierarchyToArray () {
         }
     }
 
-    arr = arr.concat(modules);
-
     return arr;
 }
 
@@ -91,5 +89,9 @@ module.exports = function (grunt, files) {
         parseFile(grunt, files[i]);
     }
 
-    return convertHierarchyToArray();
+    var arr = convertHierarchyToArray();
+
+    arr = arr.concat(nonHierarchicalModules);
+
+    return arr;
 };
