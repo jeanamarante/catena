@@ -3,6 +3,20 @@ var closureCompiler = require('google-closure-compiler');
 
 var compilePath = '';
 var externsPath = '';
+var childClasses = {};
+
+function parseExtends (content) {
+    // Match extend('ParentModule', 'ChildModule')
+    return content.replace(/extend\s*\(\s*['"](.*)['"]\s*,\s*['"](.*)['"]\s*\)/g, function (match, $1, $2) {
+        childClasses[$2] = $1;
+
+        return '';
+    });
+}
+
+function parseClasses (content) {
+    return content;
+}
 
 /**
  * Parse and normalize all CLASS modules to temporary dest file.
@@ -16,6 +30,11 @@ var externsPath = '';
 
 function writeTmpDestFile (grunt, task, taskData) {
     var content = grunt.file.read(taskData.dest);
+
+    content = parseExtends(content);
+    content = parseClasses(content);
+
+    grunt.file.write(compilePath, content);
 }
 
 /**
@@ -29,7 +48,7 @@ function writeTmpDestFile (grunt, task, taskData) {
  */
 
 function writeTmpExternsFile (grunt, task, taskData) {
-    var content = stringifyExternsData(grunt, task, taskData);
+    var content = stringifyExterns(taskData.externs);
 
     // SINGLE container and properties.
     content += 'var SINGLE = {};';
@@ -45,25 +64,21 @@ function writeTmpExternsFile (grunt, task, taskData) {
 }
 
 /**
- * Concatenate manually declared externs into variable declarations.
+ * Concatenate each extern into a variable declaration that points to an empty object.
  *
- * @function stringifyExternsData
- * @param {Object} grunt
- * @param {Object} task
- * @param {Object} taskData
+ * @function stringifyExterns
+ * @param {Array} externs
  * @return {String}
  * @api private
  */
 
-function stringifyExternsData (grunt, task, taskData) {
-    var arr = taskData.externs;
-
-    if (!Array.isArray(arr)) { return ''; }
+function stringifyExterns (externs) {
+    if (!Array.isArray(externs)) { return ''; }
 
     var content = '';
 
-    for (var i = 0, max = arr.length; i < max; i++) {
-        content += 'var ' + String(arr[i]) + ' = {};';
+    for (var i = 0, max = externs.length; i < max; i++) {
+        content += 'var ' + String(externs[i]) + ' = {};';
     }
 
     return content;
@@ -89,7 +104,9 @@ module.exports = function (grunt, task, taskData, tmpDir) {
                         '--language_out', 'ECMASCRIPT6_STRICT',
                         '--warning_level', 'QUIET',
                         '--js_output_file', taskData.dest,
-                        '--compilation_level', 'ADVANCED'
+                        '--dependency_mode', 'NONE',
+                        '--compilation_level', 'ADVANCED',
+                        '--process_common_js_modules', 'true'
                     ]
                 }
             }
