@@ -2,6 +2,12 @@ var path = require('path');
 var tmpDir = path.resolve(__dirname, 'tmp/');
 var clientSideDir = path.resolve(__dirname, 'lib/client-side/');
 
+var fileRegistry = {
+    start: [],
+    src: [],
+    end: []
+};
+
 // Task arguments.
 var deploying = false;
 var withoutWatch = false;
@@ -25,7 +31,7 @@ function writeDevFile (grunt) {
 }
 
 /**
- * Only Javascript is allowed to be added into files list.
+ * Only Javascript is allowed to be added into list of files.
  *
  * @function isInvalidFile
  * @param {String} file
@@ -35,39 +41,36 @@ function writeDevFile (grunt) {
  */
 
 function isInvalidFile (file, stats) {
-    // Do not block access to sub directories.
-    if (stats.isDirectory()) {
-        return false;
-    } else if (path.extname(file) === '.js') {
-        return false;
-    } else {
-        return true;
-    }
+    // Do not block access to directories.
+    return !(stats.isDirectory() || path.extname(file) === '.js');
 }
 
 /**
- * @function buildFileList
+ * Store all Javascript files in the order that they'll be concatenated.
+ *
+ * @function registerFiles
  * @param {Object} grunt
  * @param {Object} task
  * @param {Object} taskData
  * @api private
  */
 
-function buildFileList (grunt, task, taskData) {
+function registerFiles (grunt, task, taskData) {
     if (typeof taskData.src !== 'string' || typeof taskData.dest !== 'string') {
         return undefined;
     } else if (!grunt.file.isDir(taskData.src)) {
         return undefined;
     }
 
-    var files = [];
-
     // Start wrap.
-    files.push(path.join(clientSideDir, 'wrapper-start.js'));
-    files.push(writeDevFile(grunt));
-    files.push(path.join(clientSideDir, 'dependencies.js'));
-    files.push(path.join(clientSideDir, 'class-properties.js'));
-    files.push(path.join(clientSideDir, 'utility-functions.js'));
+    fileRegistry.start.push(path.join(clientSideDir, 'wrapper-start.js'));
+    fileRegistry.start.push(writeDevFile(grunt));
+    fileRegistry.start.push(path.join(clientSideDir, 'dependencies.js'));
+    fileRegistry.start.push(path.join(clientSideDir, 'class-properties.js'));
+    fileRegistry.start.push(path.join(clientSideDir, 'utility-functions.js'));
+
+    // End wrap.
+    fileRegistry.end.push(path.join(clientSideDir, 'wrapper-end.js'));
 
     // recursive-readdir is asynchronous.
     var done = task.async();
@@ -78,16 +81,17 @@ function buildFileList (grunt, task, taskData) {
 
         // Solve dependencies ahead of time before minifying when deploying.
         if (deploying) {
-            srcFiles = require('./lib/compile/dependencies.js')(grunt, srcFiles);
+            require('./lib/compile/parse.js')(grunt, srcFiles);
+
+            // All concatenated and parsed Javascript files in src directory.
+            fileRegistry.src.push(path.join(tmpDir, 'parsed-src-files.js'));
+
+        } else {
+            // All Javascript files in src directory.
+            fileRegistry.src = srcFiles;
         }
 
-        // All Javascript files in src directory.
-        files = files.concat(srcFiles);
-
-        // End wrap.
-        files.push(path.join(clientSideDir, 'wrapper-end.js'));
-
-        concat(grunt, task, taskData, files);
+        concat(grunt, task, taskData);
     });
 }
 
@@ -98,18 +102,19 @@ function buildFileList (grunt, task, taskData) {
  * @param {Object} grunt
  * @param {Object} task
  * @param {Object} taskData
- * @param {Array} files
  * @api private
  */
 
-function concat (grunt, task, taskData, files) {
+function concat (grunt, task, taskData) {
     if (!grunt.task.exists('concat')) {
         grunt.loadNpmTasks('grunt-contrib-concat');
     }
 
     grunt.config('concat.catena', {
-        src: files,
-        dest: taskData.dest
+        src: fileRegistry.start.concat(fileRegistry.src, fileRegistry.end),
+
+        // Concatenate all files as a temporary file when deploying.
+        dest: deploying ? path.join(tmpDir, 'compile.js') : taskData.dest
     });
 
     // Minify dest file and prepend license file content to dest file after concatening it when deploying.
@@ -144,15 +149,13 @@ function concat (grunt, task, taskData, files) {
 function license (grunt, task, taskData) {
     if (typeof taskData.license !== 'string' || !grunt.file.isFile(taskData.license)) { return undefined; }
 
-    var destFile = grunt.file.read(taskData.dest);
-    var licenseFile = grunt.file.read(taskData.license);
-
     // Prepend content read from license file as multi-line comment.
     var content = '';
+
     content += '/****************************************';
-    content += '\x0A' + licenseFile + '\x0A';
+    content += '\x0A' + grunt.file.read(taskData.license) + '\x0A';
     content += '****************************************/';
-    content += '\x0A\x0A\x0A' + destFile;
+    content += '\x0A\x0A\x0A' + grunt.file.read(taskData.dest);
 
     grunt.file.write(taskData.dest, content);
 }
@@ -192,6 +195,6 @@ module.exports = function (grunt) {
         deploying = this.args.indexOf('deploy') !== -1;
         withoutWatch = this.args.indexOf('without_watch') !== -1;
 
-        buildFileList(grunt, this, grunt.config.get('catena'));
+        registerFiles(grunt, this, grunt.config.get('catena'));
     });
 };
