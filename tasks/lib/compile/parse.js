@@ -126,8 +126,63 @@ function parseClass (ast) {
     return true;
 }
 
-module.exports = function (grunt, task, taskData, tmpDir, files) {
-    for (var i = 0, max = files.length; i < max; i++) {
-        parseFile(grunt, files[i]);
+function concatenateParsedModules () {
+    var content = '';
+    var moduleNames = Object.keys(hierarchy);
+
+    for (var i = 0, max = moduleNames.length; i < max; i++) {
+        var name = moduleNames[i];
+        var node = hierarchy[name];
+
+        if (node.parentName === '') {
+            content += concatenateClassModule(name, node);
+        }
     }
+
+    content += concatenateNonHierarchicalModules();
+
+    return content;
+}
+
+function concatenateClassModule (name, node) {
+    var content = concatenateClassConstructor(name, node) + concatenateClassAppend(name, node);
+
+    for (var i = 0, max = node.children.length; i < max; i++) {
+        var childName = node.children[i];
+        var childNode = hierarchy[childName];
+
+        content += concatenateClassModule(childName, childNode);
+    }
+
+    return content;
+}
+
+function concatenateClassConstructor (name, node) {
+    var content = '\x0A';
+
+    return content + '\x0A';
+}
+
+function concatenateClassAppend (name, node) {
+    var content = '\x0A';
+
+    return content + '\x0A';
+}
+
+function concatenateNonHierarchicalModules () {
+    var content = '';
+
+    for (var i = 0, max = nonHierarchicalNodes.length; i < max; i++) {
+        content += '\x0A' + nonHierarchicalNodes[i].content + '\x0A';
+    }
+
+    return content;
+}
+
+module.exports = function (grunt, task, taskData, tmpDir, srcFiles) {
+    for (var i = 0, max = srcFiles.length; i < max; i++) {
+        parseFile(grunt, srcFiles[i]);
+    }
+
+    grunt.file.write(path.join(tmpDir, 'parsed-src-files.js'), concatenateParsedModules());
 };
