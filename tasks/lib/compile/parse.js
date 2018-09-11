@@ -88,19 +88,40 @@ function parseExtend (ast) {
 
 function parseClass (ast, filePath) {
     var append = null;
+    var appendName = '';
+
     var constructor = null;
+    var constructorName = '';
 
     for (var i = 0, max = ast.body.length; i < max; i++) {
         var node = ast.body[i];
 
         if (isExpressionStatement(node) && isAssignmentExpression(node.expression)) {
             var node = node.expression;
+
+            if (isIdentifier(node.left.object) && isIdentifier(node.left.property)) {
+                if (node.left.object.name === 'CLASS') {
+                    constructor = node;
+                    constructorName = node.left.property.name;
+                }
+            } else if (isMemberExpression(node.left.object)) {
+                var subNode = node.left;
+
+                if (isIdentifier(subNode.object.object) && isIdentifier(subNode.object.property)) {
+                    if (subNode.object.object.name === 'CLASS' && subNode.property.name === 'append') {
+                        append = node;
+                        appendName = subNode.object.property.name;
+                    }
+                }
+            }
         }
     }
 
-    if (constructor === null || append === null) { return false; }
-
-    var name = '';
+    if (constructor === null || append === null) {
+        return false;
+    } else if (constructorName !== appendName) {
+        return false;
+    }
 
     return true;
 }
