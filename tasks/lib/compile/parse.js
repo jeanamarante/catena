@@ -27,18 +27,16 @@ function createHierarchyNode (name) {
     if (hierarchy[name] !== undefined) { return undefined; }
 
     hierarchy[name] = {
-        append: null,
         children: [],
-        filePath: '',
         parentName: '',
-        constructor: null
+        moduleAppend: null,
+        moduleConstructor: null
     };
 }
 
-function createNonHierarchicalNode (content, filePath) {
+function createNonHierarchicalNode (content) {
     nonHierarchicalNodes.push({
-        content: content,
-        filePath: filePath
+        content: content
     });
 }
 
@@ -50,13 +48,11 @@ function parseFile(grunt, filePath) {
         ecmaVersion: 6
     });
 
-    if (filePath === 'js/Main.js') {
-        var parseOne = parseExtend(ast);
-        var parseTwo = parseClass(ast, filePath);
+    var parseOne = parseExtend(ast);
+    var parseTwo = parseClass(ast);
 
-        if (!parseOne && !parseTwo) {
-            createNonHierarchicalNode(content, filePath);
-        }
+    if (!parseOne && !parseTwo) {
+        createNonHierarchicalNode(content);
     }
 }
 
@@ -64,64 +60,68 @@ function parseExtend (ast) {
     for (var i = 0, max = ast.body.length; i < max; i++) {
         var node = ast.body[i];
 
-        if (isExpressionStatement(node) && isCallExpression(node.expression)) {
+        if (isExpressionStatement(node) && isCallExpression(node.expression) && node.expression.callee.name === 'extend') {
             node = node.expression;
 
-            if (node.callee.name === 'extend') {
-                var parentName = node.arguments[0].value;
-                var childName = node.arguments[1].value;
+            var parentName = node.arguments[0].value;
+            var childName = node.arguments[1].value;
 
-                createHierarchyNode(parentName);
-                createHierarchyNode(childName);
+            createHierarchyNode(parentName);
+            createHierarchyNode(childName);
 
-                hierarchy[parentName].children.push(childName);
+            hierarchy[parentName].children.push(childName);
 
-                hierarchy[childName].parentName = parentName;
+            hierarchy[childName].parentName = parentName;
 
-                return true;
-            }
+            return true;
         }
     }
 
     return false;
 }
 
-function parseClass (ast, filePath) {
-    var append = null;
-    var appendName = '';
+function parseClass (ast) {
+    var moduleAppend = null;
+    var moduleAppendName = '';
 
-    var constructor = null;
-    var constructorName = '';
+    var moduleConstructor = null;
+    var moduleConstructorName = '';
 
     for (var i = 0, max = ast.body.length; i < max; i++) {
         var node = ast.body[i];
 
-        if (isExpressionStatement(node) && isAssignmentExpression(node.expression)) {
-            var node = node.expression;
+        if (!isExpressionStatement(node) || !isAssignmentExpression(node.expression)) { continue; }
 
-            if (isIdentifier(node.left.object) && isIdentifier(node.left.property)) {
-                if (node.left.object.name === 'CLASS') {
-                    constructor = node;
-                    constructorName = node.left.property.name;
-                }
-            } else if (isMemberExpression(node.left.object)) {
-                var subNode = node.left;
+        node = node.expression;
 
-                if (isIdentifier(subNode.object.object) && isIdentifier(subNode.object.property)) {
-                    if (subNode.object.object.name === 'CLASS' && subNode.property.name === 'append') {
-                        append = node;
-                        appendName = subNode.object.property.name;
-                    }
-                }
+        if (isIdentifier(node.left.object) && isIdentifier(node.left.property) && node.left.object.name === 'CLASS') {
+            moduleConstructor = node;
+            moduleConstructorName = node.left.property.name;
+
+        } else if (isMemberExpression(node.left.object)) {
+            var subNode = node.left;
+
+            if (isIdentifier(subNode.object.object) && isIdentifier(subNode.object.property)) {
+                if (subNode.object.object.name !== 'CLASS' || subNode.property.name !== 'append') { continue; }
+
+                moduleAppend = node;
+                moduleAppendName = subNode.object.property.name;
             }
         }
     }
 
-    if (constructor === null || append === null) {
+    if (moduleConstructor === null || moduleAppend === null) {
         return false;
-    } else if (constructorName !== appendName) {
+    } else if (moduleConstructorName !== moduleAppendName) {
         return false;
     }
+
+    createHierarchyNode(moduleConstructorName);
+
+    var hierarchyNode = hierarchy[moduleConstructorName];
+
+    hierarchyNode.moduleAppend = moduleAppend;
+    hierarchyNode.moduleConstructor = moduleConstructor;
 
     return true;
 }
