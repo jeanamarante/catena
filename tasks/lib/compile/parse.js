@@ -11,14 +11,27 @@ function isCallExpression (node) {
     return node.type === 'CallExpression';
 }
 
-function createHierarchyNode (parentName, childName) {
-    if (hierarchy[childName] !== undefined) { return undefined; }
+function isAssignmentExpression (node) {
+    return node.type === 'AssignmentExpression' && node.operator === '=';
+}
 
-    hierarchy[childName] = {
-        ast: null,
-        filePath: '',
+function isMemberExpression (node) {
+    return node.type === 'MemberExpression';
+}
+
+function isIdentifier (node) {
+    return node.type === 'Identifier';
+}
+
+function createHierarchyNode (name) {
+    if (hierarchy[name] !== undefined) { return undefined; }
+
+    hierarchy[name] = {
+        append: null,
         children: [],
-        parentName: parentName
+        filePath: '',
+        parentName: '',
+        constructor: null
     };
 }
 
@@ -38,13 +51,16 @@ function parseFile(grunt, filePath) {
     });
 
     if (filePath === 'js/Main.js') {
-        if (!parseExtend(ast, filePath) && !parseClass(ast, filePath)) {
+        var parseOne = parseExtend(ast);
+        var parseTwo = parseClass(ast, filePath);
+
+        if (!parseOne && !parseTwo) {
             createNonHierarchicalNode(content, filePath);
         }
     }
 }
 
-function parseExtend (ast, filePath) {
+function parseExtend (ast) {
     for (var i = 0, max = ast.body.length; i < max; i++) {
         var node = ast.body[i];
 
@@ -55,13 +71,12 @@ function parseExtend (ast, filePath) {
                 var parentName = node.arguments[0].value;
                 var childName = node.arguments[1].value;
 
-                createHierarchyNode('', parentName);
-                createHierarchyNode(parentName, childName);
+                createHierarchyNode(parentName);
+                createHierarchyNode(childName);
 
                 hierarchy[parentName].children.push(childName);
 
-                hierarchy[childName].ast = ast;
-                hierarchy[childName].filePath = filePath;
+                hierarchy[childName].parentName = parentName;
 
                 return true;
             }
@@ -72,11 +87,22 @@ function parseExtend (ast, filePath) {
 }
 
 function parseClass (ast, filePath) {
-    for (var i = 0, max = ast.body.length; i < max; i++) {
+    var append = null;
+    var constructor = null;
 
+    for (var i = 0, max = ast.body.length; i < max; i++) {
+        var node = ast.body[i];
+
+        if (isExpressionStatement(node) && isAssignmentExpression(node.expression)) {
+            var node = node.expression;
+        }
     }
 
-    return false;
+    if (constructor === null || append === null) { return false; }
+
+    var name = '';
+
+    return true;
 }
 
 module.exports = function (grunt, task, taskData, tmpDir, files) {
