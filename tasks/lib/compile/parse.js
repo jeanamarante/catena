@@ -172,9 +172,31 @@ function concatenateClassConstructor (name, node) {
     var content = '\x0A';
     var subString = node.content.substring(node.moduleConstructor.right.start, node.moduleConstructor.right.end);
 
+    if (hierarchy[name].parentName !== '') {
+        subString = replaceClassSuper(name, subString);
+    }
+
     content += 'CLASS.' + name + ' = ' + subString + ';';
 
     return content + '\x0A';
+}
+
+function replaceClassSuper (name, content) {
+    var replaced = false;
+
+    content = content.replace(/this\s*?\.\s*?super\s*?\(\s*?\)/, function (match) {
+        replaced = true;
+
+        return 'CLASS.' + hierarchy[name].parentName + '.call(this)';
+    });
+
+    if (replaced) { return content; }
+
+    content = content.replace(/this\s*?\.\s*?super\s*?\(/, function (match) {
+        return 'CLASS.' + hierarchy[name].parentName + '.call(this, ';
+    });
+
+    return content;
 }
 
 function concatenateClassAppend (name, node) {
@@ -183,11 +205,12 @@ function concatenateClassAppend (name, node) {
     content += 'CLASS.' + name + '.prototype = ';
 
     if (node.parentName === '') {
-        content += 'Object.create(CLASS.prototype);';
+        content += 'Object.create(CLASS.prototype);\x0A\x0A';
     } else {
-        content += 'Object.create(CLASS.' + node.parentName + '.prototype);';
+        content += 'Object.create(CLASS.' + node.parentName + '.prototype);\x0A\x0A';
     }
 
+    content += 'CLASS.' + name + '.prototype.constructor = ' + 'CLASS.' + name + ';';
     content += concatenateClassAppendProperties(name, node);
 
     return content + '\x0A';

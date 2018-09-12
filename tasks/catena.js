@@ -81,17 +81,23 @@ function registerFiles (grunt, task, taskData) {
 
         // Solve dependencies ahead of time before minifying when deploying.
         if (deploying) {
-            require('./lib/compile/parse.js')(grunt, srcFiles);
+            grunt.registerTask('parse:catena', '', function () {
+                require('./lib/compile/parse.js')(grunt, task, taskData, tmpDir, srcFiles);
 
-            // All concatenated and parsed Javascript files in src directory.
-            fileRegistry.src.push(path.join(tmpDir, 'parsed-src-files.js'));
+                // All concatenated and parsed Javascript files in src directory.
+                fileRegistry.src.push(path.join(tmpDir, 'parsed-src-files.js'));
+
+                concat(grunt, task, taskData);
+            });
+
+            grunt.task.run('parse:catena');
 
         } else {
             // All Javascript files in src directory.
             fileRegistry.src = srcFiles;
-        }
 
-        concat(grunt, task, taskData);
+            concat(grunt, task, taskData);
+        }
     });
 }
 
