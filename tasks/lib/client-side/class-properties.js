@@ -9,23 +9,7 @@ CLASS.prototype = Object.create(Object.prototype);
  */
 
 $descriptor.value = (function () {
-    if (!$development) {
-        var nodePrototype = null;
-
-        return function () {
-            if (isNull(nodePrototype)) {
-                nodePrototype = Object.getPrototypeOf(Object.getPrototypeOf(this));
-            } else {
-                nodePrototype = Object.getPrototypeOf(nodePrototype);
-            }
-
-            if (nodePrototype === CLASS.prototype) {
-                nodePrototype = null;
-            } else {
-                nodePrototype.constructor.apply(this, Array.prototype.slice.call(arguments));
-            }
-        };
-    }
+    if (!$development) { return function () {}; }
 
     var nodeName = ''; // Next parent in chain.
     var rootName = ''; // First child in chain.
