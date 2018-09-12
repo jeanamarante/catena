@@ -15,6 +15,9 @@ var closureCompiler = require('google-closure-compiler');
 function writeTmpExternsFile (grunt, task, taskData, filePath) {
     var content = stringifyExterns(taskData.externs);
 
+    // CommonJS
+    content += 'var require = function () {};';
+
     // SINGLE container and properties.
     content += 'var SINGLE = {};';
     content += 'SINGLE.init = function () {};';
@@ -65,13 +68,12 @@ module.exports = function (grunt, task, taskData, tmpDir) {
                     args: [
                         '--js', compileFilePath,
                         '--externs', externsFilePath,
-                        '--language', 'ECMASCRIPT6_STRICT',
+                        '--language_in', 'ECMASCRIPT6_STRICT',
                         '--language_out', 'ECMASCRIPT6_STRICT',
                         '--warning_level', 'QUIET',
                         '--js_output_file', taskData.dest,
                         '--dependency_mode', 'NONE',
-                        '--compilation_level', 'ADVANCED',
-                        '--process_common_js_modules', 'true'
+                        '--compilation_level', 'ADVANCED'
                     ]
                 }
             }

@@ -1,3 +1,6 @@
+// Helper methods for all CLASS modules are stored here.
+CLASS.prototype = Object.create(Object.prototype);
+
 /**
  * Recursively inherit the constructor properties of parent modules.
  *
@@ -11,12 +14,16 @@ $descriptor.value = (function () {
 
         return function () {
             if (isNull(nodePrototype)) {
-                nodePrototype = this.$parentPrototype;
+                nodePrototype = Object.getPrototypeOf(Object.getPrototypeOf(this));
+            } else {
+                nodePrototype = Object.getPrototypeOf(nodePrototype);
             }
 
-            nodePrototype.constructor.apply(this, Array.prototype.slice.call(arguments));
-
-            nodePrototype = nodePrototype.$parentPrototype;
+            if (nodePrototype === CLASS.prototype) {
+                nodePrototype = null;
+            } else {
+                nodePrototype.constructor.apply(this, Array.prototype.slice.call(arguments));
+            }
         };
     }
 
@@ -103,7 +110,7 @@ $descriptor.value = (function () {
     };
 })();
 
-Object.defineProperty($rootClassProto.prototype, 'super', $descriptor);
+Object.defineProperty(CLASS.prototype, 'super', $descriptor);
 
 /**
  * Error out program whenever abstract is invoked.
@@ -134,11 +141,11 @@ $descriptor.value = (function () {
     }
 })();
 
-Object.defineProperty($rootClassProto.prototype, 'abstract', $descriptor);
+Object.defineProperty(CLASS.prototype, 'abstract', $descriptor);
 
 if ($development) {
     // CLASS flag.
     $descriptor.value = true;
 
-    Object.defineProperty($rootClassProto.prototype, '$isClass', $descriptor);
+    Object.defineProperty(CLASS.prototype, '$isClass', $descriptor);
 }

@@ -1,3 +1,4 @@
+var path = require('path');
 var acorn = require('acorn');
 
 var hierarchy = {};
@@ -23,10 +24,15 @@ function isIdentifier (node) {
     return node.type === 'Identifier';
 }
 
+function isProperty (node) {
+    return node.type === 'Property';
+}
+
 function createHierarchyNode (name) {
     if (hierarchy[name] !== undefined) { return undefined; }
 
     hierarchy[name] = {
+        content: '',
         children: [],
         parentName: '',
         moduleAppend: null,
@@ -49,7 +55,7 @@ function parseFile(grunt, filePath) {
     });
 
     var parseOne = parseExtend(ast);
-    var parseTwo = parseClass(ast);
+    var parseTwo = parseClass(ast, content);
 
     if (!parseOne && !parseTwo) {
         createNonHierarchicalNode(content);
@@ -80,7 +86,7 @@ function parseExtend (ast) {
     return false;
 }
 
-function parseClass (ast) {
+function parseClass (ast, content) {
     var moduleAppend = null;
     var moduleAppendName = '';
 
@@ -120,6 +126,7 @@ function parseClass (ast) {
 
     var hierarchyNode = hierarchy[moduleConstructorName];
 
+    hierarchyNode.content = content;
     hierarchyNode.moduleAppend = moduleAppend;
     hierarchyNode.moduleConstructor = moduleConstructor;
 
@@ -141,6 +148,10 @@ function concatenateParsedModules () {
 
     content += concatenateNonHierarchicalModules();
 
+    content = content.replace(/\_\$\_\s*?\.\s*?([A-Za-z0-9\_]+)/g, function (match, $1) {
+        return 'CLASS.' + $1 + '.prototype';
+    });
+
     return content;
 }
 
@@ -159,6 +170,9 @@ function concatenateClassModule (name, node) {
 
 function concatenateClassConstructor (name, node) {
     var content = '\x0A';
+    var subString = node.content.substring(node.moduleConstructor.right.start, node.moduleConstructor.right.end);
+
+    content += 'CLASS.' + name + ' = ' + subString + ';';
 
     return content + '\x0A';
 }
@@ -166,7 +180,38 @@ function concatenateClassConstructor (name, node) {
 function concatenateClassAppend (name, node) {
     var content = '\x0A';
 
+    content += 'CLASS.' + name + '.prototype = ';
+
+    if (node.parentName === '') {
+        content += 'Object.create(CLASS.prototype);';
+    } else {
+        content += 'Object.create(CLASS.' + node.parentName + '.prototype);';
+    }
+
+    content += concatenateClassAppendProperties(name, node);
+
     return content + '\x0A';
+}
+
+function concatenateClassAppendProperties (name, node) {
+    var properties = node.moduleAppend.right.properties;
+    var max = properties.length;
+
+    if (max === 0) { return ''; }
+
+    var content = '';
+
+    for (var i = 0; i < max; i++) {
+        var subNode = properties[i];
+
+        if (!isProperty(subNode)) { continue; }
+
+        content += '\x0A\x0A';
+        content += 'CLASS.' + name + '.prototype.' + subNode.key.name + ' = ';
+        content += node.content.substring(subNode.value.start, subNode.value.end) + ';';
+    }
+
+    return content;
 }
 
 function concatenateNonHierarchicalModules () {

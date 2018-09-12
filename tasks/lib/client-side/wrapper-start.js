@@ -24,7 +24,6 @@ window.addEventListener('load', function (e) {
     $development = undefined;
     $loading = undefined;
     $errorThrown = undefined;
-    $rootClassProto = undefined;
     $descriptor = undefined;
     $singlePostInitModules = undefined;
     $hierarchy = undefined;

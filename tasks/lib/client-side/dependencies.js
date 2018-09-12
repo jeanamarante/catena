@@ -7,10 +7,6 @@ var $loading = true;
 // Has an error been thrown manually before loading finishes?
 var $errorThrown = false;
 
-// Helper methods for CLASS modules. All CLASS modules
-// link their prototypes to all the functions declared here.
-var $rootClassProto = { prototype: {} };
-
 // Create reusable descriptor for object properties.
 var $descriptor = {
     value: null,
@@ -221,6 +217,9 @@ var $checkClassStructures = function () {
 
     for (var i = 0, max = keys.length; i < max; i++) {
         var name = keys[i];
+
+        if (name === 'prototype') { continue; }
+
         var module = CLASS[name];
 
         // CLASS modules must point to a constructor function.
@@ -250,12 +249,13 @@ var $appendRootClasses = function () {
     for (var i = 0, max = keys.length; i < max; i++) {
         var name = keys[i];
 
+        if (name === 'prototype') { continue; }
+
         if (!$hierarchy.hasParent(name)) {
             $appendClass('', name);
         }
     }
 };
-
 
 /**
  * @function appendClass
@@ -267,9 +267,9 @@ var $appendRootClasses = function () {
 var $appendClass = function (parentName, childName) {
     var child = CLASS[childName];
 
-    // Link to $rootClassProto if no parentName is provided. An empty
-    // parentName indicates that the child has no declared parent.
-    var parent = isEmptyString(parentName) ? $rootClassProto : CLASS[parentName];
+    // Link to CLASS.prototype if parentName is empty. An empty
+    // parentName indicates that the child has no parent.
+    var parent = isEmptyString(parentName) ? CLASS : CLASS[parentName];
 
     $linkClassPrototypes(parent, child);
     $defineClassProperties(parentName, childName, child);
@@ -284,7 +284,7 @@ var $appendClass = function (parentName, childName) {
 /**
  * Link the prototype of the parent to the child module.
  *
- * @function linkPrototypes
+ * @function linkClassPrototypes
  * @param {String} parent
  * @param {String} child
  * @api internal
@@ -366,7 +366,7 @@ var $checkSingles = function () {
 /**
  * Check the data type and init method of all SINGLE modules.
  *
- * @function checkClassStructures
+ * @function checkSingleStructures
  * @api internal
  */
 
