@@ -1,9 +1,9 @@
 > # catena
-> Wrapper Library for Javascript OOP
+> Wrapper Library for JavaScript OOP
 
 &nbsp;
 
-_catena is a small wrapper library I made that helps me follow clean and consistent coding conventions while writing client-side Javascript apps. I am personally using catena in a project called Moebius. I do not recommend using catena in projects that require compatibility with older browsers or projects in which you feel ES6 classes might do a better job. If you do use catena and find any issues please let me know and I'll try to reply asap. :)_
+_catena is a small wrapper library I made that helps me follow clean and consistent coding conventions while writing client-side JavaScript apps. I am personally using catena in a project called Moebius. I do not recommend using catena in projects that require compatibility with older browsers or projects in which you feel ES6 classes might do a better job. If you do use catena and find any issues please let me know and I'll try to reply asap. :)_
 
 &nbsp;
 
@@ -60,15 +60,15 @@ grunt.config.init({
 
 #### deploy
 
-Run task with deploy argument `grunt catena:deploy` to minify dest file.
+Run task with deploy argument `grunt catena:deploy` to optimize and minify dest file. If you need to debug the deployed version of the app, you can also add without_minify argument `grunt catena:deploy:without_minify`.
 
 #### src
 
-Path to directory where all of the Javascript files will be recursively searched and concatenated into a single file.
+Path to directory where all of the JavaScript files will be recursively searched and concatenated into a single file.
 
 #### dest
 
-Path to concatenated Javascript file.
+Path to concatenated JavaScript file.
 
 #### watch
 
@@ -98,7 +98,7 @@ Path to file containing license agreement. Content in file is prepended to dest 
 
 ### Project Structure
 
-All Javascript files should be placed inside the src directory, all of them will be concatenated recursively. All projects must have a CLASS.Main module declared as the entry point of the application.
+All JavaScript files should be placed inside the src directory, all of them will be concatenated recursively. All projects must have a CLASS.Main module declared as the entry point of the application.
 
 ```
 src
