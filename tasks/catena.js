@@ -34,7 +34,7 @@ function writeDevFile (grunt) {
 }
 
 /**
- * Only Javascript is allowed to be added into list of files.
+ * Only JavaScript is allowed to be added into list of files.
  *
  * @function isInvalidFile
  * @param {String} file
@@ -49,7 +49,7 @@ function isInvalidFile (file, stats) {
 }
 
 /**
- * Store all Javascript files in the order that they'll be concatenated.
+ * Store all JavaScript files in the order that they'll be concatenated.
  *
  * @function registerFiles
  * @param {Object} grunt
@@ -87,7 +87,7 @@ function registerFiles (grunt, task, taskData) {
             grunt.registerTask('parse:catena', '', function () {
                 require('./lib/compile/parse.js')(grunt, task, taskData, tmpDir, srcFiles);
 
-                // All concatenated and parsed Javascript files in src directory.
+                // All concatenated and parsed JavaScript files in src directory.
                 fileRegistry.src.push(parsedSrcFilesPath);
 
                 concat(grunt, task, taskData);
@@ -96,7 +96,7 @@ function registerFiles (grunt, task, taskData) {
             grunt.task.run('parse:catena');
 
         } else {
-            // All Javascript files in src directory.
+            // All JavaScript files in src directory.
             fileRegistry.src = srcFiles;
 
             concat(grunt, task, taskData);
