@@ -1,7 +1,9 @@
 var path = require('path');
 var tmpDir = path.resolve(__dirname, 'tmp/');
 var clientSideDir = path.resolve(__dirname, 'lib/client-side/');
+var parsedSrcFilesPath = path.join(tmpDir, 'parsed-src-files.js');
 
+// Lists of file paths stored for file concatenation.
 var fileRegistry = {
     start: [],
     src: [],
@@ -11,9 +13,10 @@ var fileRegistry = {
 // Task arguments.
 var deploying = false;
 var withoutWatch = false;
+var withoutMinify = false;
 
 /**
- * Write a file that declares if application is in development mode.
+ * Write temporary file that declares if application is in development mode or not.
  *
  * @function writeDevFile
  * @param {Object} grunt
@@ -85,7 +88,7 @@ function registerFiles (grunt, task, taskData) {
                 require('./lib/compile/parse.js')(grunt, task, taskData, tmpDir, srcFiles);
 
                 // All concatenated and parsed Javascript files in src directory.
-                fileRegistry.src.push(path.join(tmpDir, 'parsed-src-files.js'));
+                fileRegistry.src.push(parsedSrcFilesPath);
 
                 concat(grunt, task, taskData);
             });
@@ -102,7 +105,7 @@ function registerFiles (grunt, task, taskData) {
 }
 
 /**
- * Concatenate all the modules into a single Javascript file.
+ * Concatenate all modules into a single JS file.
  *
  * @function concat
  * @param {Object} grunt
@@ -119,26 +122,50 @@ function concat (grunt, task, taskData) {
     grunt.config('concat.catena', {
         src: fileRegistry.start.concat(fileRegistry.src, fileRegistry.end),
 
-        // Concatenate all files as a temporary file when deploying.
-        dest: deploying ? path.join(tmpDir, 'compile.js') : taskData.dest
+        // Concatenate all files as a temporary file when deploying and minifying.
+        dest: deploying && !withoutMinify ? path.join(tmpDir, 'compile.js') : taskData.dest
     });
 
-    // Minify dest file and prepend license file content to dest file after concatening it when deploying.
+    // When deploying run concat task in tandem with other tasks.
     if (deploying) {
-        grunt.registerTask('minify:catena', '', function () {
-            require('./lib/compile/minify.js')(grunt, task, taskData, tmpDir);
-        });
-
-        grunt.registerTask('license:catena', '', function () {
-            license(grunt, task, taskData);
-        });
-
-        grunt.task.run('concat:catena', 'minify:catena', 'license:catena');
+        prepareMinify(grunt, task, taskData);
 
     } else {
         grunt.task.run('concat:catena');
 
         watch(grunt, task, taskData);
+    }
+}
+
+/**
+ * Prepare the concatenated JS file for minification.
+ *
+ * @function prepareMinify
+ * @param {Object} grunt
+ * @param {Object} task
+ * @param {Object} taskData
+ * @api private
+ */
+
+function prepareMinify (grunt, task, taskData) {
+    grunt.registerTask('license:catena', '', function () {
+        license(grunt, task, taskData);
+    });
+
+    if (!withoutMinify) {
+        grunt.registerTask('minify:catena', '', function () {
+            require('./lib/compile/minify.js')(grunt, task, taskData, tmpDir);
+        });
+
+        grunt.task.run('concat:catena', 'minify:catena', 'license:catena');
+
+    } else {
+        // Just delete parsed file when not minifying.
+        grunt.registerTask('cleanup:catena', '', function () {
+            grunt.file.delete(parsedSrcFilesPath, { force: true });
+        });
+
+        grunt.task.run('concat:catena', 'cleanup:catena', 'license:catena');
     }
 }
 
@@ -200,6 +227,7 @@ module.exports = function (grunt) {
     grunt.registerTask('catena', function () {
         deploying = this.args.indexOf('deploy') !== -1;
         withoutWatch = this.args.indexOf('without_watch') !== -1;
+        withoutMinify = this.args.indexOf('without_minify') !== -1;
 
         registerFiles(grunt, this, grunt.config.get('catena'));
     });
