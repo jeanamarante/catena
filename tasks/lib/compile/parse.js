@@ -1,50 +1,122 @@
 var path = require('path');
 var acorn = require('acorn');
 
+// All CLASS modules are stored here.
 var hierarchy = {};
+
+// Files that do not declare CLASS modules are stored here.
 var nonHierarchicalNodes = [];
+
+/**
+ * @function isExpressionStatement
+ * @param {Object} node
+ * @return Boolean
+ * @api private
+ */
 
 function isExpressionStatement (node) {
     return node.type === 'ExpressionStatement';
 }
 
+/**
+ * @function isCallExpression
+ * @param {Object} node
+ * @return Boolean
+ * @api private
+ */
+
 function isCallExpression (node) {
     return node.type === 'CallExpression';
 }
 
+/**
+ * @function isAssignmentExpression
+ * @param {Object} node
+ * @return Boolean
+ * @api private
+ */
+
 function isAssignmentExpression (node) {
+    // Only check for AssignmentExpressions that only use the equals sign.
     return node.type === 'AssignmentExpression' && node.operator === '=';
 }
+
+/**
+ * @function isMemberExpression
+ * @param {Object} node
+ * @return Boolean
+ * @api private
+ */
 
 function isMemberExpression (node) {
     return node.type === 'MemberExpression';
 }
 
+/**
+ * @function isIdentifier
+ * @param {Object} node
+ * @return Boolean
+ * @api private
+ */
+
 function isIdentifier (node) {
     return node.type === 'Identifier';
 }
+
+/**
+ * @function isProperty
+ * @param {Object} node
+ * @return Boolean
+ * @api private
+ */
 
 function isProperty (node) {
     return node.type === 'Property';
 }
 
+/**
+ * Create hierarchy nodes for all CLASS modules.
+ *
+ * @function createHierarchyNode
+ * @param {String} name
+ * @api private
+ */
+
 function createHierarchyNode (name) {
     if (hierarchy[name] !== undefined) { return undefined; }
 
     hierarchy[name] = {
-        content: '',
-        children: [],
-        parentName: '',
-        moduleAppend: null,
-        moduleConstructor: null
+        content: '',            // Read file content.
+        children: [],           // All parsed children in extend invocations.
+        parentName: '',         // Parsed parent in extend invocation.
+        moduleAppend: null,     // Append node in AST.
+        moduleConstructor: null // Constructor Node in AST.
     };
 }
+
+/**
+ * Append nodes that contain the content of files
+ * that have no CLASS module declarations.
+ *
+ * @function createNonHierarchicalNode
+ * @param {String} content
+ * @api private
+ */
 
 function createNonHierarchicalNode (content) {
     nonHierarchicalNodes.push({
         content: content
     });
 }
+
+/**
+ * Read file content and parse it for CLASS modules.
+ *
+ * @function parseFile
+ * @param {Object} grunt
+ * @param {String} filePath
+ * @api private
+ */
 
 function parseFile(grunt, filePath) {
     var content = grunt.file.read(filePath);
@@ -57,6 +129,8 @@ function parseFile(grunt, filePath) {
     var parseOne = parseExtend(ast);
     var parseTwo = parseClass(ast, content);
 
+    // If no extend invocation and no CLASS declaration is found,
+    // then push file content into a non hierarchical node.
     if (!parseOne && !parseTwo) {
         createNonHierarchicalNode(content);
     }
