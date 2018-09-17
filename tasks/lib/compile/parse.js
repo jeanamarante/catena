@@ -259,15 +259,9 @@ function concatenateParsedModules () {
         }
     }
 
-    // Simply append all non hierarchical modules after
+    // Simply append all non hierarchical nodes after
     // concatenating all CLASS modules.
-    content += concatenateNonHierarchicalModules();
-
-    // Replace all _$_ prototype shorthand references with the
-    // standard prototype notation.
-    content = content.replace(/\_\$\_\s*?\.\s*?([A-Za-z0-9\_]+)/g, function (match, $1) {
-        return 'CLASS.' + $1 + '.prototype';
-    });
+    content += concatenateNonHierarchicalNodes();
 
     return content;
 }
@@ -297,6 +291,14 @@ function concatenateClassModule (name, node) {
     return content;
 }
 
+/**
+ * @function concatenateClassConstructor
+ * @param {String} name
+ * @param {Object} node
+ * @return {String}
+ * @api private
+ */
+
 function concatenateClassConstructor (name, node) {
     var content = '\x0A';
     var subString = node.content.substring(node.moduleConstructor.right.start, node.moduleConstructor.right.end);
@@ -310,17 +312,30 @@ function concatenateClassConstructor (name, node) {
     return content + '\x0A';
 }
 
+/**
+ * @function replaceClassSuper
+ * @param {String} name
+ * @param {String} content
+ * @return {String}
+ * @api private
+ */
+
 function replaceClassSuper (name, content) {
     var replaced = false;
 
+    // Super invocation with no argument.
+    // Regex Match: this.super()
     content = content.replace(/this\s*?\.\s*?super\s*?\(\s*?\)/, function (match) {
         replaced = true;
 
         return 'CLASS.' + hierarchy[name].parentName + '.call(this)';
     });
 
+    // Only one regex has to match and replace.
     if (replaced) { return content; }
 
+    // Super invocation with arguments.
+    // Regex Match: this.super(
     content = content.replace(/this\s*?\.\s*?super\s*?\(/, function (match) {
         return 'CLASS.' + hierarchy[name].parentName + '.call(this, ';
     });
@@ -328,22 +343,46 @@ function replaceClassSuper (name, content) {
     return content;
 }
 
+/**
+ * @function concatenateClassAppend
+ * @param {String} name
+ * @param {Object} node
+ * @return {String}
+ * @api private
+ */
+
 function concatenateClassAppend (name, node) {
     var content = '\x0A';
 
-    content += 'CLASS.' + name + '.prototype = ';
+    // Start parent prototype wrap.
+    content += 'CLASS.' + name + '.prototype = Object.create(CLASS.';
 
-    if (node.parentName === '') {
-        content += 'Object.create(CLASS.prototype);\x0A\x0A';
-    } else {
-        content += 'Object.create(CLASS.' + node.parentName + '.prototype);\x0A\x0A';
+    // Concatenate module's parent name if it isn't an empty string.
+    if (node.parentName !== '') {
+        content += node.parentName + '.';
     }
 
+    // End parent prototype wrap.
+    content += 'prototype);\x0A\x0A';
+
+    // The constructor property is the only one that is assigned automatically.
     content += 'CLASS.' + name + '.prototype.constructor = ' + 'CLASS.' + name + ';';
+
     content += concatenateClassAppendProperties(name, node);
+
+    // Only replace prototype shorthand declarations in the CLASS append.
+    content = replaceClassPrototypeShorthand(content);
 
     return content + '\x0A';
 }
+
+/**
+ * @function concatenateClassAppendProperties
+ * @param {String} name
+ * @param {Object} node
+ * @return {String}
+ * @api private
+ */
 
 function concatenateClassAppendProperties (name, node) {
     var properties = node.moduleAppend.right.properties;
@@ -366,7 +405,30 @@ function concatenateClassAppendProperties (name, node) {
     return content;
 }
 
-function concatenateNonHierarchicalModules () {
+/**
+ * Replace all _$_ prototype shorthand references with the
+ * standard prototype notation.
+ *
+ * @function replaceClassPrototypeShorthand
+ * @param {String} content
+ * @return {String}
+ * @api private
+ */
+
+function replaceClassPrototypeShorthand (content) {
+    // Regex Match: _$_.(Module)
+    return content.replace(/\_\$\_\s*?\.\s*?([A-Za-z0-9\_]+)/g, function (match, $1) {
+        return 'CLASS.' + $1 + '.prototype';
+    });
+}
+
+/**
+ * @function concatenateNonHierarchicalNodes
+ * @return {String}
+ * @api private
+ */
+
+function concatenateNonHierarchicalNodes () {
     var content = '';
 
     for (var i = 0, max = nonHierarchicalNodes.length; i < max; i++) {
@@ -377,6 +439,7 @@ function concatenateNonHierarchicalModules () {
 }
 
 module.exports = function (grunt, task, taskData, tmpDir, srcFiles) {
+    // Parse all modules before creating temporary file.
     for (var i = 0, max = srcFiles.length; i < max; i++) {
         parseFile(grunt, srcFiles[i]);
     }
