@@ -304,8 +304,7 @@ CLASS.Child = function () {
 };
 
 CLASS.Child.append = {
-    // The _$_ shorthand references all CLASS module prototypes. You should
-    // only use _$_ inside of the methods declared in the append object.
+    // The _$_ shorthand references all CLASS module prototypes.
     callMe: function () {
         _$_.Parent.callMe.call(this);
 
