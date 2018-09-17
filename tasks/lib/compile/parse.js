@@ -259,9 +259,13 @@ function concatenateParsedModules () {
         }
     }
 
-    // Simply append all non hierarchical nodes after
-    // concatenating all CLASS modules.
+    // Simply append all non hierarchical nodes after concatenating
+    // all CLASS modules.
     content += concatenateNonHierarchicalNodes();
+
+    // Always replace prototype shorthand declarations after all
+    // content has been concatenated.
+    content = replaceClassPrototypeShorthand(content);
 
     return content;
 }
@@ -367,11 +371,7 @@ function concatenateClassAppend (name, node) {
 
     // The constructor property is the only one that is assigned automatically.
     content += 'CLASS.' + name + '.prototype.constructor = ' + 'CLASS.' + name + ';';
-
     content += concatenateClassAppendProperties(name, node);
-
-    // Only replace prototype shorthand declarations in the CLASS append.
-    content = replaceClassPrototypeShorthand(content);
 
     return content + '\x0A';
 }
