@@ -18,8 +18,9 @@
 		"node": ">=0.10.0"
 	},
 	"dependencies": {
-        "grunt": "^1.0.0",
-        "acorn": "^5.7.0",
+		"grunt": "^1.0.0",
+		"acorn": "^5.7.0",
+		"js-beautify": "^1.8.0",
 		"recursive-readdir": "^2.2.0",
 		"grunt-contrib-watch": "^1.1.0",
 		"grunt-contrib-concat": "^1.0.0",

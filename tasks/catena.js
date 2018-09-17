@@ -122,14 +122,12 @@ function concat (grunt, task, taskData) {
     grunt.config('concat.catena', {
         src: fileRegistry.start.concat(fileRegistry.src, fileRegistry.end),
 
-        // Concatenate all files as a temporary file when deploying and minifying.
-        dest: deploying && !withoutMinify ? path.join(tmpDir, 'compile.js') : taskData.dest
+        // Concatenate all files as a temporary file when deploying.
+        dest: deploying ? path.join(tmpDir, 'compile.js') : taskData.dest
     });
 
-    // When deploying run concat task in tandem with other tasks.
     if (deploying) {
-        prepareMinify(grunt, task, taskData);
-
+        deploy(grunt, task, taskData);
     } else {
         grunt.task.run('concat:catena');
 
@@ -138,34 +136,33 @@ function concat (grunt, task, taskData) {
 }
 
 /**
- * Prepare the concatenated JS file for minification.
+ * Run concat task in tandem with other tasks.
  *
- * @function prepareMinify
+ * @function deploy
  * @param {Object} grunt
  * @param {Object} task
  * @param {Object} taskData
  * @api private
  */
 
-function prepareMinify (grunt, task, taskData) {
+function deploy (grunt, task, taskData) {
     grunt.registerTask('license:catena', '', function () {
         license(grunt, task, taskData);
     });
 
-    if (!withoutMinify) {
+    if (withoutMinify) {
+        grunt.registerTask('beautify:catena', '', function () {
+            require('./lib/compile/beautify.js')(grunt, task, taskData, tmpDir);
+        });
+
+        grunt.task.run('concat:catena', 'beautify:catena', 'license:catena');
+
+    } else {
         grunt.registerTask('minify:catena', '', function () {
             require('./lib/compile/minify.js')(grunt, task, taskData, tmpDir);
         });
 
         grunt.task.run('concat:catena', 'minify:catena', 'license:catena');
-
-    } else {
-        // Just delete parsed file when not minifying.
-        grunt.registerTask('cleanup:catena', '', function () {
-            grunt.file.delete(parsedSrcFilesPath, { force: true });
-        });
-
-        grunt.task.run('concat:catena', 'cleanup:catena', 'license:catena');
     }
 }
 
