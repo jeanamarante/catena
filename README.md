@@ -3,7 +3,7 @@
 
 &nbsp;
 
-_catena is a small wrapper library I made that helps me follow clean and consistent coding conventions while writing client-side JavaScript apps. I am personally using catena in a project called Moebius. I do not recommend using catena in projects that require compatibility with older browsers or projects in which you feel ES6 classes might do a better job. If you do use catena and find any issues please let me know and I'll try to reply asap. :)_
+_catena is an experimental wrapper library I made that helps me follow clean and consistent coding conventions while writing client-side JavaScript apps. I am personally using catena in a project called Moebius. I do not recommend using catena in projects that require compatibility with older browsers or projects in which you feel ES6 classes might do a better job. If you do use catena and find any issues please let me know and I'll try to reply asap. :)_
 
 &nbsp;
 
@@ -100,6 +100,8 @@ Path to file containing license agreement. Content in file is prepended to dest 
 
 All JavaScript files should be placed inside the src directory, all of them will be concatenated recursively. All projects must have a CLASS.Main module declared as the entry point of the application.
 
+_You should only declare one module per file. catena will parse all JavaScript files in the src directory individually when deploy argument is used. Parsing will fail if more than one module is declared in a file._
+
 ```
 src
 │   Main.js
@@ -116,9 +118,9 @@ src
 
 #### CLASS
 
-References all of the modules that can be instantiated. Always remember to declare the append property for all CLASS modules as object literals. The append property is what ties the properties and methods of the CLASS module to the prototype chain.
+References all of the modules that can be instantiated. Always remember to declare the append property for all CLASS modules as object literals. Properties declared in the append object are tied to the prototype of the CLASS module.
 
-Here's a list of properties exposed by catena (Inside the prototype of CLASS instances):
+Here's a list of internal properties exposed by catena (inside the prototype of CLASS modules):
 
 * $isClass
 * $applied
@@ -133,8 +135,8 @@ CLASS.Parent = function () {
 };
 
 CLASS.Parent.append = {
-    // Properties and methods declared in append will
-    // be shared by all instances of the module.
+    // Properties declared in append will be shared by
+    // all instances of the module in the prototype.
 };
 
 // Child.js
@@ -147,8 +149,8 @@ CLASS.Child = function () {
 };
 
 CLASS.Child.append = {
-    // Any properties or methods that share the same name to
-    // any of the Parent's are overwritten.
+    // Properties that share the same name to any of the Parent's
+    // append properties can be overwritten or overridden.
 };
 ```
 
@@ -162,7 +164,7 @@ Constants used inside the app should be declared here. Properties declared insid
 CONST.GRAVITY = 9.8;
 ```
 
-Here's a list of constants exposed by catena: (Inside CONST)
+Here's a list of constants exposed by catena (inside CONST):
 
 * $DEV: Will always be true unless you run catena with the deploy argument. Useful for performing expensive tests at runtime prior to having your code deployed.
 
@@ -172,7 +174,7 @@ Here's a list of constants exposed by catena: (Inside CONST)
 
 Singletons reference object literals, like the append property in CLASS modules. If the init or postInit method are declared in a SINGLE module, they will be invoked prior to Main being instantiated.
 
-Here's a list of properties exposed by catena: (Inside SINGLE modules)
+Here's a list of internal properties exposed by catena (inside SINGLE modules):
 
 * $isSingle
 * $name
@@ -261,7 +263,7 @@ extend('Shape', 'Square');
 
 CLASS.Square.append = {
     calculateArea: function () {
-        // Calculate the area of the square.
+        // Calculate the area of the square with overwritten method.
     }
 };
 
@@ -302,7 +304,7 @@ CLASS.Child = function () {
 };
 
 CLASS.Child.append = {
-    // The _$_ pointer references all CLASS module prototypes.
+    // The _$_ shorthand references all CLASS module prototypes.
     callMe: function () {
         _$_.Parent.callMe.call(this);
 
@@ -333,23 +335,37 @@ Protected properties can only be read, written and invoked by instances of the s
 this.__x = 0;
 ```
 
-It is strongly advised to not start any of your references with $ as catena uses this convention internally to solve dependencies at runtime.
+It is strongly advised to not start any references with $ as catena uses this convention internally to solve dependencies at runtime. The only internal properties you should access are the ones declared in CONST. Internal properties exposed in CLASS and SINGLE modules are used to solve dependencies at runtime and help with debugging when CONST.$DEV is true, you should never access them in your application as they will not be declared when deploying.
 
 ```js
-$solveDependencies = function () {};
+// Wrong
+CLASS.Test = function () {
+    this.$testValue = 0;
+};
+
+CLASS.Test.append = {
+    $testMethod: function () {}
+};
+
+var $testFunction = function () {};
+
+// Correct
+if (CONST.$DEV) {
+    // Do expensive test.
+}
 ```
 
 &nbsp;
 
 #### Utility Functions
 
-Useful functions that catena uses internally that are exposed for you to use.
+Functions that catena uses internally and are exposed for you to use.
 
 &nbsp;
 
 ##### throwError, throwArgumentError
 
-All arguments are optional. type will always be shown as uppercase.
+All arguments are optional. Type will always be shown as uppercase.
 
 _throwError(message: String, type: String, module: Object, index: Number);_
 
@@ -361,7 +377,7 @@ _throwArgumentError(name: String, type: String, module: Object, index: Number);_
 
 ##### isNaN,&nbsp; isNull,&nbsp; isArray,&nbsp; isEmptyArray,&nbsp; isNonEmptyArray,&nbsp; isObject,&nbsp; isNumber,&nbsp; isString,&nbsp; isEmptyString,&nbsp; isNonEmptyString,&nbsp; isBoolean,&nbsp; isFunction,&nbsp; isInstance,&nbsp; isUndefined
 
-Collection of functions for data type checking.
+Functions for data type checking.
 
 _isArray(arg: *);_
 
@@ -374,7 +390,7 @@ _isInstance(CLASS.Shape, new CLASS.Triangle());_
 
 ##### testArray,&nbsp; testEmptyArray,&nbsp; testNonEmptyArray,&nbsp; testObject,&nbsp; testNumber,&nbsp; testString,&nbsp; testEmptyString,&nbsp; testNonEmptyString,&nbsp; testBoolean,&nbsp; testFunction,&nbsp; testInstance,&nbsp; testOptionalInstance
 
-Collection of functions that will check if data type is valid and error the program invoking throwArgumentError if it is invalid.
+Functions that will check if data type is valid and error the program out with throwArgumentError if it is invalid.
 
 _testArray(arg: *, argName: String, module: Object, errorIndex: Number);_
 
