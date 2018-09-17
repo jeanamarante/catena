@@ -10,7 +10,7 @@ var nonHierarchicalNodes = [];
 /**
  * @function isExpressionStatement
  * @param {Object} node
- * @return Boolean
+ * @return {Boolean}
  * @api private
  */
 
@@ -21,7 +21,7 @@ function isExpressionStatement (node) {
 /**
  * @function isCallExpression
  * @param {Object} node
- * @return Boolean
+ * @return {Boolean}
  * @api private
  */
 
@@ -32,7 +32,7 @@ function isCallExpression (node) {
 /**
  * @function isAssignmentExpression
  * @param {Object} node
- * @return Boolean
+ * @return {Boolean}
  * @api private
  */
 
@@ -44,7 +44,7 @@ function isAssignmentExpression (node) {
 /**
  * @function isMemberExpression
  * @param {Object} node
- * @return Boolean
+ * @return {Boolean}
  * @api private
  */
 
@@ -55,7 +55,7 @@ function isMemberExpression (node) {
 /**
  * @function isIdentifier
  * @param {Object} node
- * @return Boolean
+ * @return {Boolean}
  * @api private
  */
 
@@ -66,7 +66,7 @@ function isIdentifier (node) {
 /**
  * @function isProperty
  * @param {Object} node
- * @return Boolean
+ * @return {Boolean}
  * @api private
  */
 
@@ -136,10 +136,20 @@ function parseFile(grunt, filePath) {
     }
 }
 
+/**
+ * Iterate on top level expression statements for extend invocation.
+ *
+ * @function parseExtend
+ * @param {Object} ast
+ * @return {Boolean}
+ * @api private
+ */
+
 function parseExtend (ast) {
     for (var i = 0, max = ast.body.length; i < max; i++) {
         var node = ast.body[i];
 
+        // Search for extend('Parent', 'Child');
         if (isExpressionStatement(node) && isCallExpression(node.expression) && node.expression.callee.name === 'extend') {
             node = node.expression;
 
@@ -149,8 +159,10 @@ function parseExtend (ast) {
             createHierarchyNode(parentName);
             createHierarchyNode(childName);
 
+            // Link child.
             hierarchy[parentName].children.push(childName);
 
+            // Link parent.
             hierarchy[childName].parentName = parentName;
 
             return true;
@@ -159,6 +171,17 @@ function parseExtend (ast) {
 
     return false;
 }
+
+/**
+ * Iterate on top level expression statements for CLASS constructor
+ * and append assignment expressions.
+ *
+ * @function parseClass
+ * @param {Object} ast
+ * @param {String} content
+ * @return {Boolean}
+ * @api private
+ */
 
 function parseClass (ast, content) {
     var moduleAppend = null;
@@ -174,10 +197,12 @@ function parseClass (ast, content) {
 
         node = node.expression;
 
+        // Search for constructor -> CLASS.Module = function () {};
         if (isIdentifier(node.left.object) && isIdentifier(node.left.property) && node.left.object.name === 'CLASS') {
             moduleConstructor = node;
             moduleConstructorName = node.left.property.name;
 
+        // Search for append -> CLASS.Module.append = {};
         } else if (isMemberExpression(node.left.object)) {
             var subNode = node.left;
 
@@ -190,6 +215,8 @@ function parseClass (ast, content) {
         }
     }
 
+    // If no constructor or append node is found or if the constructor and
+    // append name do not match then don't create the hierarchy node.
     if (moduleConstructor === null || moduleAppend === null) {
         return false;
     } else if (moduleConstructorName !== moduleAppendName) {
@@ -200,12 +227,23 @@ function parseClass (ast, content) {
 
     var hierarchyNode = hierarchy[moduleConstructorName];
 
+    // Store file content if CLASS module is parsed successfully.
     hierarchyNode.content = content;
+
+    // Store constructor and append nodes for concatenation.
     hierarchyNode.moduleAppend = moduleAppend;
     hierarchyNode.moduleConstructor = moduleConstructor;
 
     return true;
 }
+
+/**
+ * Concatenate all parsed modules into a single string.
+ *
+ * @function concatenateParsedModules
+ * @return {String}
+ * @api private
+ */
 
 function concatenateParsedModules () {
     var content = '';
@@ -215,13 +253,18 @@ function concatenateParsedModules () {
         var name = moduleNames[i];
         var node = hierarchy[name];
 
+        // Recursively concatenate top level CLASS modules only.
         if (node.parentName === '') {
             content += concatenateClassModule(name, node);
         }
     }
 
+    // Simply append all non hierarchical modules after
+    // concatenating all CLASS modules.
     content += concatenateNonHierarchicalModules();
 
+    // Replace all _$_ prototype shorthand references with the
+    // standard prototype notation.
     content = content.replace(/\_\$\_\s*?\.\s*?([A-Za-z0-9\_]+)/g, function (match, $1) {
         return 'CLASS.' + $1 + '.prototype';
     });
@@ -229,7 +272,19 @@ function concatenateParsedModules () {
     return content;
 }
 
+/**
+ * Append recursively CLASS module hierarchy.
+ *
+ * @function concatenateClassModule
+ * @param {String} name
+ * @param {Object} node
+ * @return {String}
+ * @api private
+ */
+
 function concatenateClassModule (name, node) {
+    // Append content for parent node before appending the content
+    // of all the child nodes.
     var content = concatenateClassConstructor(name, node) + concatenateClassAppend(name, node);
 
     for (var i = 0, max = node.children.length; i < max; i++) {
