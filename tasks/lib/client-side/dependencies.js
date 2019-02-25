@@ -2,13 +2,13 @@
 const _$_ = $development ? {} : undefined;
 
 // Is catena still loading dependencies?
-var $loading = true;
+let $loading = true;
 
 // Has an error been thrown manually before loading finishes?
-var $errorThrown = false;
+let $errorThrown = false;
 
 // Create reusable descriptor for object properties.
-var $descriptor = {
+let $descriptor = {
     value: null,
     writable: false,
     enumerable: false,
@@ -16,10 +16,10 @@ var $descriptor = {
 };
 
 // Array for SINGLE modules that have the postInit method declared.
-var $singlePostInitModules = [];
+let $singlePostInitModules = [];
 
 // Stores the links between parent and child modules.
-var $hierarchy = (function () {
+let $hierarchy = (function () {
     if ($development) {
         return {
             parents: {},
@@ -35,7 +35,7 @@ var $hierarchy = (function () {
              */
 
             link: function (parentName, childName) {
-                var arr = this.children[parentName];
+                let arr = this.children[parentName];
 
                 // If parent has not been referenced, create new array.
                 if (isUndefined(arr)) {
@@ -109,7 +109,7 @@ var $hierarchy = (function () {
  * @api internal
  */
 
-var $solveDependencies = function () {
+let $solveDependencies = function () {
     $checkClasses();
     $checkSingles();
 
@@ -131,12 +131,12 @@ var $solveDependencies = function () {
  * @api internal
  */
 
-var $wrapMain = function () {
+let $wrapMain = function () {
     if (!$development) { return undefined; }
 
     CLASS.Main = (function () {
-        var Main = CLASS.Main;
-        var instance = null;
+        let Main = CLASS.Main;
+        let instance = null;
 
         return function () {
             if (!isNull(instance)) {
@@ -157,7 +157,7 @@ var $wrapMain = function () {
  * @api internal
  */
 
-var $checkClasses = function () {
+let $checkClasses = function () {
     if (!$development) { return undefined; }
 
     $checkMain();
@@ -172,7 +172,7 @@ var $checkClasses = function () {
  * @api internal
  */
 
-var $checkMain = function () {
+let $checkMain = function () {
     if (isUndefined(CLASS.Main)) {
         throwError('Main does not exist.', 'MAIN');
     }
@@ -185,15 +185,15 @@ var $checkMain = function () {
  * @api internal
  */
 
-var $checkClassLinks = function () {
-    var children = $hierarchy.getAllChildren();
+let $checkClassLinks = function () {
+    let children = $hierarchy.getAllChildren();
 
-    for (var i = 0, max = children.length; i < max; i++) {
-        var childName = children[i];
-        var parentName = $hierarchy.getParent(childName);
+    for (let i = 0, max = children.length; i < max; i++) {
+        let childName = children[i];
+        let parentName = $hierarchy.getParent(childName);
 
-        var childDoesNotExist = isUndefined(CLASS[childName]);
-        var parentDoesNotExist = isUndefined(CLASS[parentName]);
+        let childDoesNotExist = isUndefined(CLASS[childName]);
+        let parentDoesNotExist = isUndefined(CLASS[parentName]);
 
         if (parentDoesNotExist && childDoesNotExist) {
             throwError(parentName + ' and ' + childName + ' modules do not exist.', 'EXTEND');
@@ -212,23 +212,23 @@ var $checkClassLinks = function () {
  * @api internal
  */
 
-var $checkClassStructures = function () {
-    var keys = Object.keys(CLASS);
+let $checkClassStructures = function () {
+    let keys = Object.keys(CLASS);
 
-    for (var i = 0, max = keys.length; i < max; i++) {
-        var name = keys[i];
+    for (let i = 0, max = keys.length; i < max; i++) {
+        let name = keys[i];
 
         if (name === 'prototype') { continue; }
 
-        var module = CLASS[name];
+        let classModule = CLASS[name];
 
         // CLASS modules must point to a constructor function.
-        if (!isFunction(module)) {
+        if (!isFunction(classModule)) {
             throwError(name + ' module has an invalid constructor.', 'CLASS');
         }
 
         // append must be an object literal.
-        if (!isObject(module.append)) {
+        if (!isObject(classModule.append)) {
             throwError(name + ' module has an invalid append.', 'CLASS');
         }
     }
@@ -241,17 +241,15 @@ var $checkClassStructures = function () {
  * @api internal
  */
 
-var $appendRootClasses = function () {
+let $appendRootClasses = function () {
     if (!$development) { return undefined; }
 
-    var keys = Object.keys(CLASS);
+    let keys = Object.keys(CLASS);
 
-    for (var i = 0, max = keys.length; i < max; i++) {
-        var name = keys[i];
+    for (let i = 0, max = keys.length; i < max; i++) {
+        let name = keys[i];
 
-        if (name === 'prototype') { continue; }
-
-        if (!$hierarchy.hasParent(name)) {
+        if (name !== 'prototype' && !$hierarchy.hasParent(name)) {
             $appendClass('', name);
         }
     }
@@ -264,12 +262,12 @@ var $appendRootClasses = function () {
  * @api internal
  */
 
-var $appendClass = function (parentName, childName) {
-    var child = CLASS[childName];
+let $appendClass = function (parentName, childName) {
+    let child = CLASS[childName];
 
     // Link to CLASS.prototype if parentName is empty. An empty
     // parentName indicates that the child has no parent.
-    var parent = isEmptyString(parentName) ? CLASS : CLASS[parentName];
+    let parent = isEmptyString(parentName) ? CLASS : CLASS[parentName];
 
     $linkClassPrototypes(parent, child);
     $defineClassProperties(parentName, childName, child);
@@ -285,20 +283,20 @@ var $appendClass = function (parentName, childName) {
  * Link the prototype of the parent to the child module.
  *
  * @function linkClassPrototypes
- * @param {String} parent
- * @param {String} child
+ * @param {Function} parent
+ * @param {Function} child
  * @api internal
  */
 
-var $linkClassPrototypes = function (parent, child) {
+let $linkClassPrototypes = function (parent, child) {
     // Link to the parent's prototype.
     child.prototype = Object.create(parent.prototype);
 
     // The append object overwrites any methods or properties the parent prototype has.
-    var keys = Object.keys(child.append);
+    let keys = Object.keys(child.append);
 
-    for (var i = 0, max = keys.length; i < max; i++) {
-        var name = keys[i];
+    for (let i = 0, max = keys.length; i < max; i++) {
+        let name = keys[i];
 
         child.prototype[name] = child.append[name];
     }
@@ -314,13 +312,13 @@ var $linkClassPrototypes = function (parent, child) {
  * @api internal
  */
 
-var $appendChildClasses = function (parentName) {
+let $appendChildClasses = function (parentName) {
     if (!$hierarchy.hasChildren(parentName)) { return undefined; }
 
-    var children = $hierarchy.getChildren(parentName);
+    let children = $hierarchy.getChildren(parentName);
 
-    for (var i = 0, max = children.length; i < max; i++) {
-        var childName = children[i];
+    for (let i = 0, max = children.length; i < max; i++) {
+        let childName = children[i];
 
         $appendClass(parentName, childName);
     }
@@ -332,22 +330,22 @@ var $appendChildClasses = function (parentName) {
  * @function defineClassProperties
  * @param {String} parentName
  * @param {String} childName
- * @param {Object} module
+ * @param {Function} childConstructor
  * @api internal
  */
 
-var $defineClassProperties = function (parentName, childName, module) {
-    $descriptor.value = module;
-
-    Object.defineProperty(module.prototype, 'constructor', $descriptor);
-
+let $defineClassProperties = function (parentName, childName, childConstructor) {
     $descriptor.value = parentName;
 
-    Object.defineProperty(module.prototype, '$parentName', $descriptor);
+    Object.defineProperty(childConstructor.prototype, '$parentName', $descriptor);
 
     $descriptor.value = childName;
 
-    Object.defineProperty(module.prototype, '$name', $descriptor);
+    Object.defineProperty(childConstructor.prototype, '$name', $descriptor);
+
+    $descriptor.value = childConstructor;
+
+    Object.defineProperty(childConstructor.prototype, 'constructor', $descriptor);
 };
 
 /**
@@ -357,7 +355,7 @@ var $defineClassProperties = function (parentName, childName, module) {
  * @api internal
  */
 
-var $checkSingles = function () {
+let $checkSingles = function () {
     if (!$development) { return undefined; }
 
     $checkSingleStructures();
@@ -370,24 +368,24 @@ var $checkSingles = function () {
  * @api internal
  */
 
-var $checkSingleStructures = function () {
-    var keys = Object.keys(SINGLE);
+let $checkSingleStructures = function () {
+    let keys = Object.keys(SINGLE);
 
-    for (var i = 0, max = keys.length; i < max; i++) {
-        var name = keys[i];
-        var module = SINGLE[name];
+    for (let i = 0, max = keys.length; i < max; i++) {
+        let name = keys[i];
+        let singleModule = SINGLE[name];
 
         // SINGLE modules must be an object literal.
-        if (!isObject(module)) {
+        if (!isObject(singleModule)) {
             throwError(name + ' module must be [Object]', 'SINGLE');
         }
 
         // init and postInit must be a function if declared.
-        if (!isUndefined(module.init) && !isFunction(module.init)) {
+        if (!isUndefined(singleModule.init) && !isFunction(singleModule.init)) {
             throwError('init method in ' + name + ' module must be undefined or [Function]', 'SINGLE');
         }
 
-        if (!isUndefined(module.postInit) && !isFunction(module.postInit)) {
+        if (!isUndefined(singleModule.postInit) && !isFunction(singleModule.postInit)) {
             throwError('postInit method in ' + name + ' module must be undefined or [Function]', 'SINGLE');
         }
     }
@@ -400,28 +398,28 @@ var $checkSingleStructures = function () {
  * @api internal
  */
 
-var $appendSingles = function () {
-    var keys = Object.keys(SINGLE);
+let $appendSingles = function () {
+    let keys = Object.keys(SINGLE);
 
-    for (var i = 0, max = keys.length; i < max; i++) {
-        var name = keys[i];
-        var module = SINGLE[name];
+    for (let i = 0, max = keys.length; i < max; i++) {
+        let name = keys[i];
+        let singleModule = SINGLE[name];
 
         if ($development) {
-            $defineSingleProperties(name, module);
+            $defineSingleProperties(name, singleModule);
         }
 
         // Invoke init method in SINGLE module if declared.
-        if (!isUndefined(module.init)) {
-            module.init();
+        if (!isUndefined(singleModule.init)) {
+            singleModule.init();
 
             // Make init unreachable after being invoked.
-            module.init = undefined;
+            singleModule.init = undefined;
         }
 
         // Queue postInit methods and invoke them after all init methods are invoked.
-        if (!isUndefined(module.postInit)) {
-            $singlePostInitModules.push(module);
+        if (!isUndefined(singleModule.postInit)) {
+            $singlePostInitModules.push(singleModule);
         }
     }
 
@@ -433,18 +431,18 @@ var $appendSingles = function () {
  *
  * @function defineSingleProperties
  * @param {String} name
- * @param {Object} module
+ * @param {Object} singleModule
  * @api internal
  */
 
-var $defineSingleProperties = function (name, module) {
+let $defineSingleProperties = function (name, singleModule) {
     $descriptor.value = name;
 
-    Object.defineProperty(module, '$name', $descriptor);
+    Object.defineProperty(singleModule, '$name', $descriptor);
 
     $descriptor.value = true;
 
-    Object.defineProperty(module, '$isSingle', $descriptor);
+    Object.defineProperty(singleModule, '$isSingle', $descriptor);
 };
 
 /**
@@ -454,16 +452,16 @@ var $defineSingleProperties = function (name, module) {
  * @api internal
  */
 
-var $invokeSinglePostInits = function () {
-    var module = $singlePostInitModules.pop();
+let $invokeSinglePostInits = function () {
+    let singleModule = $singlePostInitModules.pop();
 
-    while (!isUndefined(module)) {
-        module.postInit();
+    while (!isUndefined(singleModule)) {
+        singleModule.postInit();
 
         // Make postInit unreachable after being invoked.
-        module.postInit = undefined;
+        singleModule.postInit = undefined;
 
-        module = $singlePostInitModules.pop();
+        singleModule = $singlePostInitModules.pop();
     }
 };
 
@@ -474,7 +472,7 @@ var $invokeSinglePostInits = function () {
  * @api internal
  */
 
-var $freezeModules = function () {
+let $freezeModules = function () {
     if (!$development) { return undefined; }
 
     $freezeConstObject(CONST);
@@ -492,12 +490,12 @@ var $freezeModules = function () {
  * @api internal
  */
 
-var $freezeConstObject = function (obj) {
-    var keys = Object.keys(obj);
+let $freezeConstObject = function (obj) {
+    let keys = Object.keys(obj);
 
-    for (var i = 0, max = keys.length; i < max; i++) {
-        var name = keys[i];
-        var value = obj[name];
+    for (let i = 0, max = keys.length; i < max; i++) {
+        let name = keys[i];
+        let value = obj[name];
 
         if (isObject(value)) {
             $freezeConstObject(value);
@@ -517,9 +515,9 @@ var $freezeConstObject = function (obj) {
  * @api internal
  */
 
-var $freezeConstArray = function (arr) {
-    for (var i = 0, max = arr.length; i < max; i++) {
-        var value = arr[i];
+let $freezeConstArray = function (arr) {
+    for (let i = 0, max = arr.length; i < max; i++) {
+        let value = arr[i];
 
         if (isObject(value)) {
             $freezeConstObject(value);
