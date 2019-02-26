@@ -1,7 +1,7 @@
 {
 	"name": "catena",
 	"description": "Wrapper Library for JavaScript OOP",
-	"version": "1.2.0",
+	"version": "2.0.0",
 	"author": {
 		"name": "Jean Amarante",
 		"url": "https://github.com/jeanamarante"
@@ -18,13 +18,18 @@
 		"node": ">=0.10.0"
 	},
 	"dependencies": {
+		"del": "^4.1.0",
+		"uuid": "^3.3.0",
+		"nsfw": "^1.2.0",
 		"grunt": "^1.0.0",
-		"acorn": "^5.7.0",
-		"js-beautify": "^1.8.0",
+		"acorn": "^6.1.0",
+		"chalk": "^2.4.0",
+        "eslint": "^5.16.0",
+        "linked-list": "^2.0.0",
+		"js-beautify": "^1.9.0",
+		"signal-exit": "^3.0.0",
 		"recursive-readdir": "^2.2.0",
-		"grunt-contrib-watch": "^1.1.0",
-		"grunt-contrib-concat": "^1.0.0",
-		"google-closure-compiler": "20180805.0.0"
+		"google-closure-compiler": "20190325.0.0"
 	},
 	"keywords": [
 		"catena",

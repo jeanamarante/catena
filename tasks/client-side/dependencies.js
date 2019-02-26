@@ -102,7 +102,7 @@ let $hierarchy = (function () {
     } else {
         return undefined;
     }
-})();
+}());
 
 /**
  * @function solveDependencies
@@ -147,7 +147,7 @@ let $wrapMain = function () {
                 return instance;
             }
         };
-    })();
+    }());
 };
 
 /**
@@ -196,11 +196,11 @@ let $checkClassLinks = function () {
         let parentDoesNotExist = isUndefined(CLASS[parentName]);
 
         if (parentDoesNotExist && childDoesNotExist) {
-            throwError(parentName + ' and ' + childName + ' modules do not exist.', 'EXTEND');
+            throwError(`${parentName} and ${childName} modules do not exist.`, 'EXTEND');
         } else if (parentDoesNotExist) {
-            throwError('Parent ' + parentName + ' does not exist for child ' + childName + ' module.', 'EXTEND');
+            throwError(`Parent ${parentName} does not exist for child ${childName} module.`, 'EXTEND');
         } else if (childDoesNotExist) {
-            throwError('Child ' + childName + ' does not exist for parent ' + parentName + ' module.', 'EXTEND');
+            throwError(`Child ${childName} does not exist for parent ${parentName} module.`, 'EXTEND');
         }
     }
 };
@@ -224,12 +224,12 @@ let $checkClassStructures = function () {
 
         // CLASS modules must point to a constructor function.
         if (!isFunction(classModule)) {
-            throwError(name + ' module has an invalid constructor.', 'CLASS');
+            throwError(`${name} module has an invalid constructor.`, 'CLASS');
         }
 
         // append must be an object literal.
         if (!isObject(classModule.append)) {
-            throwError(name + ' module has an invalid append.', 'CLASS');
+            throwError(`${name} module has an invalid append.`, 'CLASS');
         }
     }
 };
@@ -377,16 +377,16 @@ let $checkSingleStructures = function () {
 
         // SINGLE modules must be an object literal.
         if (!isObject(singleModule)) {
-            throwError(name + ' module must be [Object]', 'SINGLE');
+            throwError(`${name} module must be [Object]`, 'SINGLE');
         }
 
         // init and postInit must be a function if declared.
         if (!isUndefined(singleModule.init) && !isFunction(singleModule.init)) {
-            throwError('init method in ' + name + ' module must be undefined or [Function]', 'SINGLE');
+            throwError(`init method in ${name} module must be undefined or [Function]`, 'SINGLE');
         }
 
         if (!isUndefined(singleModule.postInit) && !isFunction(singleModule.postInit)) {
-            throwError('postInit method in ' + name + ' module must be undefined or [Function]', 'SINGLE');
+            throwError(`postInit method in ${name} module must be undefined or [Function]`, 'SINGLE');
         }
     }
 };

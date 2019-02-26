@@ -45,32 +45,28 @@ Basic chess game built with catena. [Click here for demo app.](https://github.co
 // Project configuration.
 grunt.config.init({
     catena: {
-    	dist {
-        	src: ['js/'], // Must be directories.
-          	dest: 'dist/app.js',
+        options: {
+            externs: ['BLITTER', 'YUI', 'jQuery', 'd3'],
+            license: 'LICENSE'
+        },
+        dev {
+            src: ['js/'], // Must be directories.
+            dest: 'dist/app.js',
             options: {
-            	watch: true,
-          		externs: ['BLITTER', 'YUI', 'jQuery', 'd3'],
-          		license: 'LICENSE'
+            	watch: true
+            }
+        },
+        deploy {
+            src: ['js/'],
+            dest: 'dist/app.js',
+            options: {
+                test: true,
+            	deploy: true
             }
         }
     }
 });
 ```
-
-__options.deploy__  
-Type: `Boolean`  
-Default: `false`
-
-Optimize dest file for deployment. Will perform ADVANCED_COMPILATION with the closure compiler after pre optimization phase if minify is set to true.
-
-Run task with the deploy argument `grunt catena:deploy` to optimize and minify dest file. If you need to debug the deployed version of the app, you can also add the without_minify argument `grunt catena:deploy:without_minify`.
-
-__options.minify__  
-Type: `Boolean`  
-Default: `true`
-
-When set to true dest file will be minified when deploy is true.
 
 __options.watch__  
 Type: `Boolean`  
@@ -78,10 +74,40 @@ Default: `false`
 
 Set watch to true to write dest file everytime time you change a file in one of the src directories. If deploy is true then watch will not run.
 
-__options.externs__  
-Type: `Array`
+__options.test__  
+Type: `Boolean`  
+Default: `false`
 
-List of globally exposed dependencies (libraries, frameworks, etc.) that prevent the closure compiler from throwing an error when minifying.
+Run static code analysis tools before deploying. If errors are found deploy will be canceled.
+
+__options.lint__  
+Type: `Boolean`  
+Default: `true`
+
+Analyze code with eslint when test is true.
+
+__options.deploy__  
+Type: `Boolean`  
+Default: `false`
+
+Optimize dest file for deployment. Will perform ADVANCED_COMPILATION with the closure compiler after pre optimization phase if minify is set to true.
+
+__options.minify__  
+Type: `Boolean`  
+Default: `true`
+
+dest file will be minified when deploy is true. If minify is false then dest file will be beautified instead.
+
+__options.license__  
+Type: `String`
+
+Path to file containing license agreement.
+
+__options.externs__  
+Type: `String[]`  
+Default: `[]`
+
+List of globally exposed dependencies (libraries, frameworks, etc.) that prevent the closure compiler from throwing an error when minifying, externs are only applied when test or deploy is true.
 
 _When working with external modules in catena, you should access properties and invoke methods using string literals. This will prevent the closure compiler from minifying property names for external modules. The closure compiler is set to use ADVANCED_COMPILATION always, by using string literals the compiler will leave property names as they are._
 
@@ -96,11 +122,6 @@ BLITTER['getImageData']('test-icon');
 
 require('path')['isAbsolute']('/');
 ```
-
-__options.license__  
-Type: `String`
-
-Path to file containing license agreement. Content in file is prepended to dest file when deploy is true.
 
 &nbsp;
 
@@ -351,7 +372,7 @@ CLASS.Test.append = {
     $testMethod: function () {}
 };
 
-var $testFunction = function () {};
+let $testFunction = function () {};
 
 // Correct
 if (CONST.$DEV) {
@@ -389,7 +410,7 @@ throwArgumentError (name: String, type: String, module: Object, index: Number)
 
 ### Validation Functions
 
-Functions for type checking.
+Type checking functions.
 
 __isNaN,&nbsp; isNull,&nbsp; isArray,&nbsp; isEmptyArray,&nbsp; isNonEmptyArray,&nbsp; isObject,&nbsp; isNumber,&nbsp; isString,&nbsp; isEmptyString,&nbsp; isNonEmptyString,&nbsp; isBoolean,&nbsp; isFunction,&nbsp; isUndefined__
 

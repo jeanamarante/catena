@@ -9,7 +9,7 @@
 
 const traceErrorStack = (function () {
     if ($development) {
-        return function (log) {
+        return function () {
             let stack = new Error('').stack;
             let cleanStack = [];
 
@@ -51,14 +51,12 @@ const traceErrorStack = (function () {
                 result = regex.exec(stack);
             }
 
-            if (Boolean(log)) { console.log(stack); }
-
             return cleanStack;
         };
     } else {
-        return function (log) { return []; };
+        return function () { return []; };
     }
-})();
+}());
 
 /**
  * Get call in error stack.
@@ -75,7 +73,7 @@ const traceCallFromErrorStack = (function () {
         return function (instance = {}, index = 0) {
             if (!isObject(instance)) { return ''; }
 
-            let call = traceErrorStack(false)[index];
+            let call = traceErrorStack()[index];
 
             if (isUndefined(call)) {
                 return '';
@@ -93,7 +91,7 @@ const traceCallFromErrorStack = (function () {
     } else {
         return function (instance = {}, index = 0) { return ''; };
     }
-})();
+}());
 
 /**
  * Throw error, all arguments are optional.
@@ -124,7 +122,7 @@ const throwError = (function () {
     } else {
         return function (message = '', type = 'ERROR', instance = {}, index = 0) {};
     }
-})();
+}());
 
 /**
  * Throw pretty argument error messages.
@@ -138,7 +136,7 @@ const throwError = (function () {
  */
 
 const throwArgumentError = function (name = 'argument', type = '', instance = {}, index = 0) {
-    throwError(String(name) + ' must be [' + String(type) + ']', 'ARG', instance, index);
+    throwError(`${String(name)} must be [${String(type)}]`, 'ARG', instance, index);
 };
 
 /**
@@ -165,20 +163,20 @@ const extend = (function () {
             }
 
             if (invalidParent) {
-                throwError('parentName for child ' + childName + ' module must be [String]', 'EXTEND');
+                throwError(`parentName for child ${childName} module must be [String]`, 'EXTEND');
             }
 
             if (invalidChild) {
-                throwError('childName for parent ' + parentName + ' module must be [String]', 'EXTEND');
+                throwError(`childName for parent ${parentName} module must be [String]`, 'EXTEND');
             }
 
             if (parentName === childName) {
-                throwError('parentName and childName cannot share the same name: ' + parentName , 'EXTEND');
+                throwError(`parentName and childName cannot share the same name: ${parentName}`, 'EXTEND');
             }
 
             // Do not allow child to inherit from more than one parent.
             if ($hierarchy.hasParent(childName)) {
-                throwError(childName + ' cannot extend ' + parentName + ' as it is already extending the ' + $hierarchy.getParent(childName) + ' module.', 'EXTEND');
+                throwError(`${childName} cannot extend ${parentName} as it is already extending the ${$hierarchy.getParent(childName)} module.`, 'EXTEND');
             }
 
             $hierarchy.link(parentName, childName);
@@ -186,7 +184,7 @@ const extend = (function () {
     } else {
         return function (parentName, childName) {};
     }
-})();
+}());
 
 /**
  * Validate data type.
@@ -301,13 +299,13 @@ const testArray = function (arg, argName, instance, errorIndex) {
 
 const testEmptyArray = function (arg, argName = 'argument', instance, errorIndex) {
     if (!isEmptyArray(arg)) {
-        throwError(String(argName) + ' has to be empty array.', 'ARG', instance, errorIndex);
+        throwError(`${String(argName)} has to be empty array.`, 'ARG', instance, errorIndex);
     }
 };
 
 const testNonEmptyArray = function (arg, argName = 'argument', instance, errorIndex) {
     if (!isNonEmptyArray(arg)) {
-        throwError(String(argName) + ' has to be non empty array.', 'ARG', instance, errorIndex);
+        throwError(`${String(argName)} has to be non empty array.`, 'ARG', instance, errorIndex);
     }
 };
 
@@ -331,13 +329,13 @@ const testString = function (arg, argName, instance, errorIndex) {
 
 const testEmptyString = function (arg, argName = 'argument', instance, errorIndex) {
     if (!isEmptyString(arg)) {
-        throwError(String(argName) + ' has to be empty string.', 'ARG', instance, errorIndex);
+        throwError(`${String(argName)} has to be empty string.`, 'ARG', instance, errorIndex);
     }
 };
 
 const testNonEmptyString = function (arg, argName = 'argument', instance, errorIndex) {
     if (!isNonEmptyString(arg)) {
-        throwError(String(argName) + ' has to be non empty string.', 'ARG', instance, errorIndex);
+        throwError(`${String(argName)} has to be non empty string.`, 'ARG', instance, errorIndex);
     }
 };
 
@@ -374,6 +372,6 @@ const testInstance = function (type, arg, typeName, argName, instance, errorInde
 const testOptionalInstance = function (type, arg, typeName = '', argName = 'argument', instance, errorIndex) {
     // Optional instances can be either null or the declared type.
     if (!isNull(arg) && !isInstance(type, arg)) {
-        throwError(String(argName) + ' must be null or [' + String(typeName) + ']', 'ARG', instance, errorIndex);
+        throwError(`${String(argName)} must be null or [${String(typeName)}]`, 'ARG', instance, errorIndex);
     }
 };

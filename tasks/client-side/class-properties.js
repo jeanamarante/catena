@@ -50,7 +50,7 @@ if ($development) {
 
                 // Prevent instance from having parent properties applied more than once.
                 if (this.$applied) {
-                    throwError('Cannot invoke super more than once for ' + this.$name + ' instance.', 'SUPER');
+                    throwError(`Cannot invoke super more than once for ${this.$name} instance.`, 'SUPER');
                 } else {
                     descriptor.value = true;
 
@@ -61,7 +61,7 @@ if ($development) {
             } else {
                 // Error out if chain is broken.
                 if (this.$name !== rootName) {
-                    throwError('Chain started by ' + rootName + ' instance is being broken by ' + this.$name + ' instance.', 'SUPER');
+                    throwError(`Chain started by ${rootName} instance is being broken by ${this.$name} instance.`, 'SUPER');
                 }
 
                 nodeName = CLASS[nodeName].prototype.$parentName;
@@ -80,13 +80,13 @@ if ($development) {
         function applyParentNode (args) {
             if (isEmptyString(nodeName)) { return undefined; }
 
-            let nextParent = CLASS[nodeName].prototype.$parentName;
+            let nextParentName = CLASS[nodeName].prototype.$parentName;
 
             // Keep reference of the node's name just in case the chain gets reset.
             let tmpName = nodeName;
 
             // If there are no more parent nodes then reset the chain.
-            if (isEmptyString(nextParent)) {
+            if (isEmptyString(nextParentName)) {
                 resetNames();
             }
 
@@ -97,7 +97,7 @@ if ($development) {
             referenceParentNode.call(this);
             applyParentNode.call(this, args);
         };
-    })();
+    }());
 
     Object.defineProperty(CLASS.prototype, 'super', $descriptor);
 }
@@ -117,7 +117,7 @@ $descriptor.value = (function () {
 
             // abstract can only be invoked inside the methods of CLASS module instances.
             if (this.$name !== call[0]) {
-                message = 'Cannot invoke abstract directly from ' + this.$name + ' instance.';
+                message = `Cannot invoke abstract directly from ${this.$name} instance.`;
             } else if (call.length === 1) {
                 message = 'Cannot invoke abstract inside a constructor.';
             } else {
@@ -129,6 +129,6 @@ $descriptor.value = (function () {
     } else {
         return function () {};
     }
-})();
+}());
 
 Object.defineProperty(CLASS.prototype, 'abstract', $descriptor);

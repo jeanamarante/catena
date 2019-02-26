@@ -1,231 +1,350 @@
-var path = require('path');
-var tmpDir = path.resolve(__dirname, 'tmp/');
-var clientSideDir = path.resolve(__dirname, 'lib/client-side/');
-var parsedSrcFilesPath = path.join(tmpDir, 'parsed-src-files.js');
+'use strict';
 
-// Lists of file paths stored for file concatenation.
-var fileRegistry = {
-    start: [],
-    src: [],
-    end: []
-};
+const fs = require('fs');
+const del = require('del');
+const path = require('path');
+const uuid = require('uuid/v4');
+const readDir = require('recursive-readdir');
 
-// Task arguments.
-var deploying = false;
-var withoutWatch = false;
-var withoutMinify = false;
+const stream = require('./util/stream');
 
-/**
- * Write temporary file that declares if application is in development mode or not.
- *
- * @function writeDevFile
- * @param {Object} grunt
- * @return {String}
- * @api private
- */
+// Files used for wrapping are stored here.
+const clientSideDir = path.resolve(__dirname, 'client-side');
 
-function writeDevFile (grunt) {
-    var filePath = path.join(tmpDir, 'dev.js');
+// This task relies on async functionality.
+let asyncDone = null;
 
-    // Set $development to false if deploying is true.
-    grunt.file.write(filePath, 'var $development = ' + String(!deploying) + ';\x0A');
-
-    return filePath;
-}
+// Use temporary directories to prevent cached files from being
+// overwritten when watcher is active.
+let tmpDir = '';
 
 /**
- * Only JavaScript is allowed to be added into list of files.
+ * Test if file path declared for option exists and is valid.
  *
- * @function isInvalidFile
+ * @function testOptionalFile
  * @param {String} file
- * @param {Object} stats
- * @return {Boolean}
+ * @param {String} optionName
  * @api private
  */
 
-function isInvalidFile (file, stats) {
-    // Do not block access to directories.
-    return !(stats.isDirectory() || path.extname(file) === '.js');
+function testOptionalFile (grunt, file, optionName) {
+    if (typeof file === 'string') {
+        let stats = fs.statSync(path.resolve(file));
+
+        if (stats.isDirectory()) {
+            throwAsyncError(new Error(`${optionName} cannot be directory.`));
+        } else if (!stats.isFile()) {
+            throwAsyncError(new Error(`${file} must be file in ${optionName}.`));
+        }
+    } else {
+        throwAsyncError(new Error(`${optionName} must be string.`));
+    }
 }
 
 /**
- * Store all JavaScript files in the order that they'll be concatenated.
- *
- * @function registerFiles
+ * @function testOriginalSrc
  * @param {Object} grunt
- * @param {Object} task
- * @param {Object} taskData
+ * @param {Array} src
  * @api private
  */
 
-function registerFiles (grunt, task, taskData) {
-    if (typeof taskData.src !== 'string' || typeof taskData.dest !== 'string') {
-        return undefined;
-    } else if (!grunt.file.isDir(taskData.src)) {
-        return undefined;
+function testOriginalSrc (grunt, src) {
+    for (let i = 0, max = src.length; i < max; i++) {
+        let item = src[i];
+
+        if (typeof item !== 'string') {
+            throwAsyncError(new Error('src must be string.'));
+        } else if (!grunt.file.isDir(path.resolve(item))) {
+            throwAsyncError(new Error(`${item} must be directory in src.`));
+        }
+    }
+}
+
+/**
+ * @function testDest
+ * @param {Object} grunt
+ * @param {String} dest
+ * @api private
+ */
+
+function testDest (grunt, dest) {
+    if (typeof dest !== 'string') {
+        throwAsyncError(new Error('dest must be string.'));
+    } else if (grunt.file.isDir(path.resolve(dest))) {
+        throwAsyncError(new Error('dest cannot be directory.'));
+    }
+}
+
+/**
+ * @function testExterns
+ * @param {Object} grunt
+ * @param {Array} externs
+ * @api private
+ */
+
+function testExterns (grunt, externs) {
+    if (!Array.isArray(externs)) {
+        throwAsyncError(new Error('externs must be array.'));
+    } else {
+        for (let i = 0, max = externs.length; i < max; i++) {
+            if (typeof externs[i] !== 'string') {
+                throwAsyncError(new Error('All items in externs array must be strings.'));
+            }
+        }
+    }
+}
+
+/**
+ * Pass error to async done function to let grunt know that the
+ * task has failed.
+ *
+ * @function throwAsyncError
+ * @param {Error} err
+ * @api private
+ */
+
+function throwAsyncError (err) {
+    asyncDone(err);
+
+    throw err;
+}
+
+/**
+ * @function createTmpDir
+ * @param {Object} grunt
+ * @api private
+ */
+
+function createTmpDir (grunt) {
+    removeTmpDir();
+
+    tmpDir = path.resolve(__dirname, 'tmp', uuid());
+
+    grunt.file.mkdir(tmpDir);
+}
+
+/**
+ * @function removeTmpDir
+ * @api private
+ */
+
+function removeTmpDir () {
+    if (tmpDir === '') { return undefined; }
+
+    if (fs.existsSync(tmpDir)) {
+        del.sync(path.join(tmpDir, '**'), { force: true });
     }
 
-    // Start wrap.
-    fileRegistry.start.push(path.join(clientSideDir, 'wrapper-start.js'));
-    fileRegistry.start.push(writeDevFile(grunt));
-    fileRegistry.start.push(path.join(clientSideDir, 'dependencies.js'));
-    fileRegistry.start.push(path.join(clientSideDir, 'class-properties.js'));
-    fileRegistry.start.push(path.join(clientSideDir, 'utility-functions.js'));
+    tmpDir = '';
+}
 
-    // End wrap.
-    fileRegistry.end.push(path.join(clientSideDir, 'wrapper-end.js'));
+/**
+ * Create files that will be used to wrap all the matched Javascript files.
+ *
+ * @function streamWrappers
+ * @param {Object} grunt
+ * @param {Object} fileData
+ * @param {Object} options
+ * @api private
+ */
 
-    // recursive-readdir is asynchronous.
-    var done = task.async();
+function streamWrappers (grunt, fileData, options) {
+    stream.createWriteStream(fileData.tmpWrapStart, () => {
+        streamWrapperEnd(grunt, fileData, options);
+    });
 
-    require('recursive-readdir')(taskData.src, [isInvalidFile], function (err, srcFiles) {
-        // Finish recursive-addir.
-        done();
+    if (options.license) {
+        streamLicense(grunt, fileData, options);
+    } else {
+        streamWrapperStart(grunt, fileData, options);
+    }
+}
 
-        // Solve dependencies ahead of time before minifying when deploying.
-        if (deploying) {
-            grunt.registerTask('parse:catena', '', function () {
-                require('./lib/compile/parse.js')(grunt, task, taskData, tmpDir, srcFiles);
+/**
+ * Prepend license in the starting wrapper.
+ *
+ * @function streamLicense
+ * @param {Object} grunt
+ * @param {Object} fileData
+ * @param {Object} options
+ * @api private
+ */
 
-                // All concatenated and parsed JavaScript files in src directory.
-                fileRegistry.src.push(parsedSrcFilesPath);
+function streamLicense (grunt, fileData, options) {
+    let content = grunt.file.read(options.license);
 
-                concat(grunt, task, taskData);
+    // Use JSDoc license tag to preserve file content as
+    // comment when minifying.
+    if (options.deploy && options.minify) {
+        content = `/**@license ${content}*/`;
+    } else {
+        content = `/*\x0A${content}*/\x0A\x0A`;
+    }
+
+    stream.write(content, () => {
+        streamWrapperStart(grunt, fileData, options);
+    });
+}
+
+/**
+ * @function streamWrapperStart
+ * @param {Object} grunt
+ * @param {Object} fileData
+ * @param {Object} options
+ * @api private
+ */
+
+function streamWrapperStart (grunt, fileData, options) {
+    stream.pipeFile(path.join(clientSideDir, 'wrapper-start.js'), () => {
+        // Always stream dynamically if application is in development mode or not.
+        stream.write(`let $development = ${String(!options.deploy)};\x0A`, () => {
+            stream.pipeFile(path.join(clientSideDir, 'dependencies.js'), () => {
+                stream.pipeFile(path.join(clientSideDir, 'class-properties.js'), () => {
+                    stream.pipeLastFile(path.join(clientSideDir, 'utility-functions.js'));
+                });
             });
+        });
+    });
+}
 
-            grunt.task.run('parse:catena');
+/**
+ * @function streamWrapperEnd
+ * @param {Object} grunt
+ * @param {Object} fileData
+ * @param {Object} options
+ * @api private
+ */
 
+function streamWrapperEnd (grunt, fileData, options) {
+    stream.createWriteStream(fileData.tmpWrapEnd, () => {
+        recurseSrcDirectories(grunt, fileData, options);
+    });
+
+    stream.pipeLastFile(path.join(clientSideDir, 'wrapper-end.js'));
+}
+
+/**
+ * Find all Javascript files in src directories.
+ *
+ * @function recurseSrcDirectories
+ * @param {Object} grunt
+ * @param {Object} fileData
+ * @param {Object} options
+ * @api private
+ */
+
+function recurseSrcDirectories (grunt, fileData, options) {
+    let promises = [];
+
+    // Ignore everything except directories and Javascript files.
+    // Store function in array for recursive-readdir module.
+    let ignoreCallback = [(file, stats) => !(stats.isDirectory() || path.extname(file) === '.js')];
+
+    for (let i = 0, max = fileData.src.length; i < max; i++) {
+        promises.push(readDir(fileData.src[i], ignoreCallback).then((value) => value, (err) => err));
+    }
+
+    Promise.all(promises)
+        .then((values) => {
+            streamMatches(grunt, fileData, options, values, values.flat());
+        }, throwAsyncError);
+}
+
+/**
+ * Iterate all matches and stream them into the dest file.
+ *
+ * @function streamMatches
+ * @param {Object} grunt
+ * @param {Object} fileData
+ * @param {Object} options
+ * @param {Array} matches
+ * @param {Array} flattenedMatches
+ * @api private
+ */
+
+function streamMatches (grunt, fileData, options, matches, flattenedMatches) {
+    // Run optional tasks after we stream  matches to dest.
+    stream.createWriteStream(fileData.dest, () => {
+        require('./dev/test')(grunt, fileData, options, throwAsyncError).performTests();
+
+        if (options.deploy) {
+            require('./deploy/parse')(grunt, fileData, options, asyncDone, throwAsyncError, flattenedMatches);
         } else {
-            // All JavaScript files in src directory.
-            fileRegistry.src = srcFiles;
-
-            concat(grunt, task, taskData);
-        }
-    });
-}
-
-/**
- * Concatenate all modules into a single JS file.
- *
- * @function concat
- * @param {Object} grunt
- * @param {Object} task
- * @param {Object} taskData
- * @api private
- */
-
-function concat (grunt, task, taskData) {
-    if (!grunt.task.exists('concat')) {
-        grunt.loadNpmTasks('grunt-contrib-concat');
-    }
-
-    grunt.config('concat.catena', {
-        src: fileRegistry.start.concat(fileRegistry.src, fileRegistry.end),
-
-        // Concatenate all files as a temporary file when deploying.
-        dest: deploying ? path.join(tmpDir, 'compile.js') : taskData.dest
-    });
-
-    if (deploying) {
-        deploy(grunt, task, taskData);
-    } else {
-        grunt.task.run('concat:catena');
-
-        watch(grunt, task, taskData);
-    }
-}
-
-/**
- * Run concat task in tandem with other tasks.
- *
- * @function deploy
- * @param {Object} grunt
- * @param {Object} task
- * @param {Object} taskData
- * @api private
- */
-
-function deploy (grunt, task, taskData) {
-    grunt.registerTask('license:catena', '', function () {
-        license(grunt, task, taskData);
-    });
-
-    if (withoutMinify) {
-        grunt.registerTask('beautify:catena', '', function () {
-            require('./lib/compile/beautify.js')(grunt, task, taskData, tmpDir);
-        });
-
-        grunt.task.run('concat:catena', 'beautify:catena', 'license:catena');
-
-    } else {
-        grunt.registerTask('minify:catena', '', function () {
-            require('./lib/compile/minify.js')(grunt, task, taskData, tmpDir);
-        });
-
-        grunt.task.run('concat:catena', 'minify:catena', 'license:catena');
-    }
-}
-
-/**
- * Prepend license file content to dest file.
- *
- * @function license
- * @param {Object} grunt
- * @param {Object} task
- * @param {Object} taskData
- * @api private
- */
-
-function license (grunt, task, taskData) {
-    if (typeof taskData.license !== 'string' || !grunt.file.isFile(taskData.license)) { return undefined; }
-
-    // Prepend content read from license file as multi-line comment.
-    var content = '';
-
-    content += '/****************************************';
-    content += '\x0A' + grunt.file.read(taskData.license) + '\x0A';
-    content += '****************************************/';
-    content += '\x0A\x0A\x0A' + grunt.file.read(taskData.dest);
-
-    grunt.file.write(taskData.dest, content);
-}
-
-/**
- * Watch all .js files in src directory.
- *
- * @function watch
- * @param {Object} grunt
- * @param {Object} task
- * @param {Object} taskData
- * @api private
- */
-
-function watch (grunt, task, taskData) {
-    // No need to run watch if application is being deployed or already being watched.
-    if (!Boolean(taskData.watch) || withoutWatch || deploying) { return undefined; }
-
-    if (!grunt.task.exists('watch')) {
-        grunt.loadNpmTasks('grunt-contrib-watch');
-    }
-
-    grunt.config('watch.catena', {
-        files: path.join(taskData.src, '**/*.js'),
-        tasks: ['catena:without_watch'],
-        options: {
-            spawn: false,
-            interval: 1000
+            // Never end task if watch option is true and there are src directories to watch.
+            if (options.watch && fileData.src.length > 0) {
+                require('./dev/watch')(grunt, fileData, options, throwAsyncError, matches, flattenedMatches);
+            } else {
+                asyncDone(true);
+            }
         }
     });
 
-    grunt.task.run('watch:catena');
+    // Place the flattened matches between the start wrapper and the end
+    // wrapper into a single dimensional array.
+    stream.pipeFileArray([fileData.tmpWrapStart, flattenedMatches, fileData.tmpWrapEnd].flat());
 }
+
+// Remove temporary directory everytime the process exits.
+require('signal-exit')((code, signal) => { removeTmpDir(); });
 
 module.exports = function (grunt) {
-    grunt.registerTask('catena', function () {
-        deploying = this.args.indexOf('deploy') !== -1;
-        withoutWatch = this.args.indexOf('without_watch') !== -1;
-        withoutMinify = this.args.indexOf('without_minify') !== -1;
+    grunt.registerMultiTask('catena', function () {
+        // Execute task asynchronously.
+        asyncDone = grunt.task.current.async();
 
-        registerFiles(grunt, this, grunt.config.get('catena'));
+        stream.setThrowAsyncError(throwAsyncError);
+
+        createTmpDir(grunt);
+
+        let options = this.options();
+
+        options.test = Boolean(options.test);
+        options.watch = Boolean(options.watch);
+        options.deploy = Boolean(options.deploy);
+
+        // Always use static analysis tools when testing by default.
+        options.lint = options.lint === undefined ? true : Boolean(options.lint);
+
+        // Always minify dest file when deploying by default.
+        options.minify = options.minify === undefined ? true : Boolean(options.minify);
+
+        if (options.externs === undefined) {
+            options.externs = [];
+        } else {
+            testExterns(grunt, options.externs);
+        }
+
+        if (options.license !== undefined) {
+            testOptionalFile(grunt, options.license, 'license');
+
+            options.license = path.resolve(options.license);
+        }
+
+        if (options.lintConfig !== undefined) {
+            testOptionalFile(grunt, options.lintConfig, 'lintConfig');
+
+            options.lintConfig = path.resolve(options.lintConfig);
+        }
+
+        for (let i = 0, max = this.files.length; i < max; i++) {
+            let fileData = this.files[i];
+
+            testOriginalSrc(grunt, fileData.orig.src);
+            testDest(grunt, fileData.dest);
+
+            // Replace fileData with new object containing resolved paths that
+            // are commonly used throughout all modules.
+            fileData = {
+                src: fileData.orig.src.map((item) => path.resolve(item)),
+                dest: path.resolve(fileData.dest),
+                tmpDir: tmpDir,
+                tmpParse: path.join(tmpDir, 'parse.js'),
+                tmpExterns: path.join(tmpDir, 'externs.js'),
+                tmpWrapEnd: path.join(tmpDir, 'wrap-end.js'),
+                tmpWrapStart: path.join(tmpDir, 'wrap-start.js')
+            };
+
+            streamWrappers(grunt, fileData, options);
+        }
     });
 };
