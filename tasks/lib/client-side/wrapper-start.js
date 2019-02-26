@@ -7,8 +7,7 @@ const CONST = {}; // Constants
 const SINGLE = {}; // Singletons
 
 window.addEventListener('load', function (e) {
-    // Do not run callback for load event if an error has
-    // been thrown while loading.
+    // Do not initialize app if an error has been thrown while loading.
     if ($errorThrown) { return undefined; }
 
     // Expose $development as $DEV.

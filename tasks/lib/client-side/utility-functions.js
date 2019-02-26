@@ -1,17 +1,4 @@
 /**
- * Return positive integer.
- *
- * @function clampErrorStackIndex
- * @param {Number} index
- * @return {Number}
- * @api public
- */
-
-const clampErrorStackIndex = function (index) {
-    return isNumber(index) && index >= 0 ? Math.floor(index) : 0;
-};
-
-/**
  * Return clean call stack with invoked CLASS and SINGLE methods.
  *
  * @function traceErrorStack
@@ -23,9 +10,8 @@ const clampErrorStackIndex = function (index) {
 const traceErrorStack = (function () {
     if ($development) {
         return function (log) {
-            var e = new Error('');
-            var clean = [];
-            var stack = e.stack;
+            let stack = new Error('').stack;
+            let cleanStack = [];
 
             // SINGLE modules might get picked as normal objects in error stack.
             // So check for Object in first capture group and assume it is a SINGLE.
@@ -35,20 +21,20 @@ const traceErrorStack = (function () {
             // (CLASS).(ErrorStacker).append(.trace)
             // (SINGLE).(ErrorStacker)(.trace)
             // (Object).(trace)
-            var regex = /(CLASS|SINGLE|Object)\.([\w]+)(?:\.append)?(\.[\w]+)?/g;
-            var result = regex.exec(stack);
+            let regex = /(CLASS|SINGLE|Object)\.([\w]+)(?:\.append)?(\.[\w]+)?/g;
+            let result = regex.exec(stack);
 
             while (!isNull(result)) {
-                var first = result[1];
-                var second = result[2];
+                let first = result[1];
+                let second = result[2];
                 // The third capture group might return undefined.
-                var third = isString(result[3]) ? result[3] : '';
+                let third = isString(result[3]) ? result[3] : '';
 
                 // SINGLEs in stack print as Object. Object will be changed
                 // to the name of the SINGLE module provided as an argument
                 // in the traceCallFromErrorStack function.
                 if (first === 'Object') {
-                    clean.push(first + '.' + second);
+                    cleanStack.push(first + '.' + second);
 
                 // Otherwise do not show module type in stack.
                 } else {
@@ -56,9 +42,9 @@ const traceErrorStack = (function () {
                     // the constructor of a CLASS module while invoking super.
                     // Example: (CLASS).(Child)(.CLASS).Parent
                     if (third === '.CLASS') {
-                        clean.push(second);
+                        cleanStack.push(second);
                     } else {
-                        clean.push(second + third);
+                        cleanStack.push(second + third);
                     }
                 }
 
@@ -67,7 +53,7 @@ const traceErrorStack = (function () {
 
             if (Boolean(log)) { console.log(stack); }
 
-            return clean;
+            return cleanStack;
         };
     } else {
         return function (log) { return []; };
@@ -78,7 +64,7 @@ const traceErrorStack = (function () {
  * Get call in error stack.
  *
  * @function traceCallFromErrorStack
- * @param {Object} module
+ * @param {Object} instance
  * @param {Number} index
  * @return {String}
  * @api public
@@ -86,28 +72,26 @@ const traceErrorStack = (function () {
 
 const traceCallFromErrorStack = (function () {
     if ($development) {
-        return function (module, index) {
-            index = clampErrorStackIndex(index);
+        return function (instance = {}, index = 0) {
+            if (!isObject(instance)) { return ''; }
 
-            var stack = traceErrorStack(false);
-            var call = stack[index];
+            let call = traceErrorStack(false)[index];
 
-            // Return empty string if out of bounds.
             if (isUndefined(call)) {
                 return '';
             } else {
-                var names = call.split('.');
+                let names = call.split('.');
 
                 // Change Object to single module's name.
-                if (names[0] === 'Object' && isObject(module) && module.$isSingle) {
-                    call = module.$name + '.' + names[1];
+                if (names[0] === 'Object' && instance.$isSingle) {
+                    call = instance.$name + '.' + names[1];
                 }
 
                 return call;
             }
         };
     } else {
-        return function (module, index) { return ''; };
+        return function (instance = {}, index = 0) { return ''; };
     }
 })();
 
@@ -117,33 +101,28 @@ const traceCallFromErrorStack = (function () {
  * @function throwError
  * @param {String} message
  * @param {String} type
- * @param {Object} module
+ * @param {Object} instance
  * @param {Number} index
  * @api public
  */
 
 const throwError = (function () {
     if ($development) {
-        return function (message, type, module, index) {
+        return function (message = '', type = 'ERROR', instance = {}, index = 0) {
             if ($loading === true) {
                 $errorThrown = true;
             }
 
-            message = isString(message) ? message : '';
+            // type is always wrapped around curly brackets and uppercase.
+            type = '{ ' + String(type).toUpperCase() + ' } ';
 
-            // Default to ERROR if not a string or empty string.
-            type = isString(type) && !isEmptyString(type) ? type : 'ERROR';
+            let call = traceCallFromErrorStack(instance, index);
+            let calledModule = !isEmptyString(call) ? ' Module: ' + call : '';
 
-            // type is wrapped around curly brackets and is uppercase.
-            type = '{ ' + type.toUpperCase() + ' } ';
-
-            var call = traceCallFromErrorStack(module, index);
-            var calledModule = !isEmptyString(call) ? ' Module: ' + call : '';
-
-            throw new Error(type + message + calledModule);
+            throw new Error(type + String(message) + calledModule);
         };
     } else {
-        return function (message, type, module, index) {};
+        return function (message = '', type = 'ERROR', instance = {}, index = 0) {};
     }
 })();
 
@@ -153,13 +132,13 @@ const throwError = (function () {
  * @function throwArgumentError
  * @param {String} name
  * @param {String} type
- * @param {Object} module
+ * @param {Object} instance
  * @param {Number} index
  * @api public
  */
 
-const throwArgumentError = function (name, type, module, index) {
-    throwError(name + ' must be [' + type + ']', 'ARG', module, index);
+const throwArgumentError = function (name = 'argument', type = '', instance = {}, index = 0) {
+    throwError(String(name) + ' must be [' + String(type) + ']', 'ARG', instance, index);
 };
 
 /**
@@ -178,8 +157,8 @@ const extend = (function () {
                 throwError('Prohibited to invoke extend after Main has been initialized.', 'EXTEND');
             }
 
-            var invalidChild = !isString(childName);
-            var invalidParent = !isString(parentName);
+            let invalidChild = !isString(childName);
+            let invalidParent = !isString(parentName);
 
             if (invalidParent && invalidChild) {
                 throwError('parentName and childName must be [String]', 'EXTEND');
@@ -295,7 +274,7 @@ const isInstance = function (type, arg) {
 };
 
 /**
- * Check data type and error out if data type fails test.
+ * Validate data type and throw error if validation fails.
  *
  * @function testArray
  * @function testEmptyArray
@@ -309,68 +288,68 @@ const isInstance = function (type, arg) {
  * @function testFunction
  * @param {*} arg
  * @param {String} argName
- * @param {Object} module
+ * @param {Object} instance
  * @param {Number} errorIndex
  * @api public
  */
 
-const testArray = function (arg, argName, module, errorIndex) {
+const testArray = function (arg, argName, instance, errorIndex) {
     if (!isArray(arg)) {
-        throwArgumentError(argName, 'Array', module, errorIndex);
+        throwArgumentError(argName, 'Array', instance, errorIndex);
     }
 };
 
-const testEmptyArray = function (arg, argName, module, errorIndex) {
+const testEmptyArray = function (arg, argName = 'argument', instance, errorIndex) {
     if (!isEmptyArray(arg)) {
-        throwError(argName + ' has to be empty array.', 'ARG', module, errorIndex);
+        throwError(String(argName) + ' has to be empty array.', 'ARG', instance, errorIndex);
     }
 };
 
-const testNonEmptyArray = function (arg, argName, module, errorIndex) {
+const testNonEmptyArray = function (arg, argName = 'argument', instance, errorIndex) {
     if (!isNonEmptyArray(arg)) {
-        throwError(argName + ' has to be non empty array.', 'ARG', module, errorIndex);
+        throwError(String(argName) + ' has to be non empty array.', 'ARG', instance, errorIndex);
     }
 };
 
-const testObject = function (arg, argName, module, errorIndex) {
+const testObject = function (arg, argName, instance, errorIndex) {
     if (!isObject(arg)) {
-        throwArgumentError(argName, 'Object', module, errorIndex);
+        throwArgumentError(argName, 'Object', instance, errorIndex);
     }
 };
 
-const testNumber = function (arg, argName, module, errorIndex) {
+const testNumber = function (arg, argName, instance, errorIndex) {
     if (!isNumber(arg)) {
-        throwArgumentError(argName, 'Number', module, errorIndex);
+        throwArgumentError(argName, 'Number', instance, errorIndex);
     }
 };
 
-const testString = function (arg, argName, module, errorIndex) {
+const testString = function (arg, argName, instance, errorIndex) {
     if (!isString(arg)) {
-        throwArgumentError(argName, 'String', module, errorIndex);
+        throwArgumentError(argName, 'String', instance, errorIndex);
     }
 };
 
-const testEmptyString = function (arg, argName, module, errorIndex) {
+const testEmptyString = function (arg, argName = 'argument', instance, errorIndex) {
     if (!isEmptyString(arg)) {
-        throwError(argName + ' has to be empty string.', 'ARG', module, errorIndex);
+        throwError(String(argName) + ' has to be empty string.', 'ARG', instance, errorIndex);
     }
 };
 
-const testNonEmptyString = function (arg, argName, module, errorIndex) {
+const testNonEmptyString = function (arg, argName = 'argument', instance, errorIndex) {
     if (!isNonEmptyString(arg)) {
-        throwError(argName + ' has to be non empty string.', 'ARG', module, errorIndex);
+        throwError(String(argName) + ' has to be non empty string.', 'ARG', instance, errorIndex);
     }
 };
 
-const testBoolean = function (arg, argName, module, errorIndex) {
+const testBoolean = function (arg, argName, instance, errorIndex) {
     if (!isBoolean(arg)) {
-        throwArgumentError(argName, 'Boolean', module, errorIndex);
+        throwArgumentError(argName, 'Boolean', instance, errorIndex);
     }
 };
 
-const testFunction = function (arg, argName, module, errorIndex) {
+const testFunction = function (arg, argName, instance, errorIndex) {
     if (!isFunction(arg)) {
-        throwArgumentError(argName, 'Function', module, errorIndex);
+        throwArgumentError(argName, 'Function', instance, errorIndex);
     }
 };
 
@@ -381,21 +360,20 @@ const testFunction = function (arg, argName, module, errorIndex) {
  * @param {*} arg
  * @param {String} typeName
  * @param {String} argName
- * @param {Object} module
+ * @param {Object} instance
  * @param {Number} errorIndex
  * @api public
  */
 
-const testInstance = function (type, arg, typeName, argName, module, errorIndex) {
+const testInstance = function (type, arg, typeName, argName, instance, errorIndex) {
     if (!isInstance(type, arg)) {
-        throwArgumentError(argName, typeName, module, errorIndex);
+        throwArgumentError(argName, typeName, instance, errorIndex);
     }
 };
 
-const testOptionalInstance = function (type, arg, typeName, argName, module, errorIndex) {
-    // Optional instances can be either null or the declared type, but
-    // they can never be undefined.
+const testOptionalInstance = function (type, arg, typeName = '', argName = 'argument', instance, errorIndex) {
+    // Optional instances can be either null or the declared type.
     if (!isNull(arg) && !isInstance(type, arg)) {
-        throwError(argName + ' must be null or [' + typeName + ']', 'ARG', module, errorIndex);
+        throwError(String(argName) + ' must be null or [' + String(typeName) + ']', 'ARG', instance, errorIndex);
     }
 };
