@@ -1,113 +1,119 @@
 // Helper methods for all CLASS modules are stored here.
 CLASS.prototype = Object.create(Object.prototype);
 
-/**
- * Recursively inherit the constructor properties of parent modules.
- *
- * @function super
- * @api public
- */
+// Only define these CLASS properties when in development mode.
+if ($development) {
+    // CLASS flag.
+    $descriptor.value = true;
 
-$descriptor.value = (function () {
-    if (!$development) { return function () {}; }
-
-    var nodeName = ''; // Next parent in chain.
-    var rootName = ''; // First child in chain.
-    var descriptor = $descriptor;
+    Object.defineProperty(CLASS.prototype, '$isClass', $descriptor);
 
     /**
-     * @function resetChain
-     * @api private
-     */
-
-    function resetChain () {
-        nodeName = '';
-        rootName = '';
-    }
-
-    /**
-     * Check in which node the super chain is at.
+     * Recursively inherit the properties declared in the constructor of parent modules.
      *
-     * @function checkChain
-     * @api private
+     * @function CLASS.super
+     * @param {...*} args
+     * @api public
      */
 
-    function checkChain () {
-        // If nodeName is an empty string, then start the chain from the
-        // parent of the root child.
-        if (isEmptyString(nodeName)) {
-            nodeName = this.$parentName;
+    $descriptor.value = (function () {
+        let nodeName = ''; // Next parent in chain.
+        let rootName = ''; // First child in chain.
+        let descriptor = $descriptor;
 
-            // Even though super might be invoked in different constructors,
-            // the same instance will always be referenced. rootName is used
-            // to know if the chain has been broken.
-            rootName = this.$name;
+        /**
+         * @function resetNames
+         * @api private
+         */
 
-            // Prevent instance from having parent properties applied more than once.
-            if (this.$applied) {
-                throwError('Cannot invoke super more than once for ' + this.$name + ' instance.', 'SUPER');
+        function resetNames () {
+            nodeName = '';
+            rootName = '';
+        }
+
+        /**
+         * Check in which node the super chain is at.
+         *
+         * @function referenceParentNode
+         * @api private
+         */
+
+        function referenceParentNode () {
+            // If nodeName is an empty string, then reference the parent of the root child.
+            if (isEmptyString(nodeName)) {
+                nodeName = this.$parentName;
+
+                // Even though super might be invoked in different constructors,
+                // the same instance will always be referenced. rootName is used
+                // to know if the chain has been broken.
+                rootName = this.$name;
+
+                // Prevent instance from having parent properties applied more than once.
+                if (this.$applied) {
+                    throwError('Cannot invoke super more than once for ' + this.$name + ' instance.', 'SUPER');
+                } else {
+                    descriptor.value = true;
+
+                    Object.defineProperty(this, '$applied', descriptor);
+                }
+
+            // Otherwise just move to next parent.
             } else {
-                descriptor.value = true;
+                // Error out if chain is broken.
+                if (this.$name !== rootName) {
+                    throwError('Chain started by ' + rootName + ' instance is being broken by ' + this.$name + ' instance.', 'SUPER');
+                }
 
-                Object.defineProperty(this, '$applied', descriptor);
+                nodeName = CLASS[nodeName].prototype.$parentName;
             }
-
-        // Otherwise just move to next parent.
-        } else {
-            // Error out if chain is broken.
-            if (this.$name !== rootName) {
-                throwError('Chain started by ' + rootName + ' instance is being broken by ' + this.$name + ' instance.', 'SUPER');
-            }
-
-            nodeName = CLASS[nodeName].prototype.$parentName;
-        }
-    }
-
-    /**
-     * If the current node has parent, apply current node to
-     * parent's constructor.
-     *
-     * @function applyNode
-     * @param {Array} args
-     * @api private
-     */
-
-    function applyNode (args) {
-        if (isEmptyString(nodeName)) { return undefined; }
-
-        var nextParent = CLASS[nodeName].prototype.$parentName;
-
-        // Keep reference of node just in case chain gets reset.
-        var temp = nodeName;
-
-        // If there are no more parent nodes then reset chain.
-        if (isEmptyString(nextParent)) {
-            resetChain();
         }
 
-        CLASS[temp].apply(this, args);
-    }
+        /**
+         * If the current node has parent, apply current node to
+         * parent's constructor.
+         *
+         * @function applyParentNode
+         * @param {Array} args
+         * @api private
+         */
 
-    return function () {
-        checkChain.call(this);
-        applyNode.call(this, Array.prototype.slice.call(arguments));
-    };
-})();
+        function applyParentNode (args) {
+            if (isEmptyString(nodeName)) { return undefined; }
 
-Object.defineProperty(CLASS.prototype, 'super', $descriptor);
+            let nextParent = CLASS[nodeName].prototype.$parentName;
+
+            // Keep reference of the node's name just in case the chain gets reset.
+            let tmpName = nodeName;
+
+            // If there are no more parent nodes then reset the chain.
+            if (isEmptyString(nextParent)) {
+                resetNames();
+            }
+
+            CLASS[tmpName].apply(this, args);
+        }
+
+        return function (...args) {
+            referenceParentNode.call(this);
+            applyParentNode.call(this, args);
+        };
+    })();
+
+    Object.defineProperty(CLASS.prototype, 'super', $descriptor);
+}
 
 /**
  * Error out program whenever abstract is invoked.
  *
- * @function abstract
+ * @function CLASS.abstract
  * @api public
  */
 
 $descriptor.value = (function () {
     if ($development) {
         return function () {
-            var call = traceCallFromErrorStack(this, 1).split('.');
-            var message = '';
+            let call = traceCallFromErrorStack(this, 1).split('.');
+            let message = '';
 
             // abstract can only be invoked inside the methods of CLASS module instances.
             if (this.$name !== call[0]) {
@@ -126,10 +132,3 @@ $descriptor.value = (function () {
 })();
 
 Object.defineProperty(CLASS.prototype, 'abstract', $descriptor);
-
-if ($development) {
-    // CLASS flag.
-    $descriptor.value = true;
-
-    Object.defineProperty(CLASS.prototype, '$isClass', $descriptor);
-}
