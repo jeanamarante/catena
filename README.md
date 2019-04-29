@@ -392,7 +392,7 @@ Functions that catena uses internally and are exposed to be used externally also
 
 __throwError__
 
-All arguments are optional. Type will always be shown as uppercase.
+All arguments are optional. Type will always be shown as uppercase. The index determines how far back in the call stack must be traveled to find the method that will be pretty printed beside the module's name in the message.
 
 ```js
 throwError (message: String, type: String, module: Object, index: Number)
