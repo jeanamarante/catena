@@ -422,7 +422,7 @@ class Watcher {
                         if (this.isStoredFile(file) && !this._modifiedFiles.has(file)) {
                             this._modifiedFiles.add(file);
 
-                            this._fileChangeCallback(file);
+                            this._fileChangeCallback(this, file);
                         }
                         break;
                 }
