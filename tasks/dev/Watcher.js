@@ -23,7 +23,7 @@ class Watcher {
         // Sometimes nsfw will show MODIFIED file events repeatedly. To prevent change
         // callback from being invoked many times for the same file then keep track
         // of unique files that have invoked the change callback once.
-        this._modifiedFiles = new Set();
+        this._modifiedFiles = new Map();
 
         this._eventCallback = null;
         this._fileAddCallback = null;
@@ -420,7 +420,7 @@ class Watcher {
                         // Keep track of files that have been changed to prevent
                         // file change callback from being invoked more than once.
                         if (this.isStoredFile(file) && !this._modifiedFiles.has(file)) {
-                            this._modifiedFiles.add(file);
+                            this._modifiedFiles.set(file, true);
 
                             this._fileChangeCallback(this, file);
                         }
