@@ -38,7 +38,7 @@ function isIterating () {
  *
  * @function isWriting
  * @return {Boolean}
- * @api private
+ * @api public
  */
 
 function isWriting () {
@@ -397,6 +397,7 @@ module.exports.writeLinkedList = function (linkedList, finishCallback) {
     }
 };
 
+module.exports.isWriting = isWriting;
 module.exports.pipeFile = pipeFile;
 module.exports.pipeFileArray = pipeFileArray;
 module.exports.pipeLastFile = pipeLastFile;
