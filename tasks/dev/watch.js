@@ -27,6 +27,9 @@ let writeStartTime = 0;
 // Amount of files that are being concatenated.
 let fileCount = 0;
 
+// Did watch event occur while writing to dest?
+let writeDelayed = false;
+
 let tmpWrapStart = '';
 let tmpWrapEnd = '';
 let dest = '';
@@ -128,8 +131,6 @@ function renameFile (oldFile, newFile) {
  */
 
 function writeFiles () {
-    writeStartTime = Date.now();
-
     stream.createWriteStream(dest, onWriteStreamEnd);
 
     stream.write(tmpWrapStart, () => {
@@ -147,16 +148,25 @@ function writeFiles () {
  */
 
 function onWriteStreamEnd () {
-    let timeDelta = String(Date.now() - writeStartTime);
-    let filePlural = fileCount === 1 ? '' : 's';
+    // Rewrite files if previous write was delayed.
+    if (writeDelayed) {
+        writeDelayed = false;
 
-    writeStartTime = 0;
+        chalk.warning('Rewriting files...');
 
-    chalk.success(`${String(fileCount)} file${filePlural} have been concatenated to dest in ${timeDelta}ms.`);
+        writeFiles();
+    } else {
+        let timeDelta = String(Date.now() - writeStartTime);
+        let filePlural = fileCount === 1 ? '' : 's';
+
+        writeStartTime = 0;
+
+        chalk.success(`${String(fileCount)} file${filePlural} have been concatenated to dest in ${timeDelta}ms.`);
+    }
 }
 
 /**
- * Write files again whenever a watch event happens.
+ * Write files whenever a watch event happens.
  *
  * @function onEvent
  * @param {Watcher} watcher
@@ -164,7 +174,21 @@ function onWriteStreamEnd () {
  */
 
 function onEvent (watcher) {
-    writeFiles();
+    // Wait for write stream to end if write has been delayed.
+    if (writeDelayed) { return undefined; }
+
+    // If any watch events occur while writing to dest then restart
+    // write stream with new changes.
+    if (stream.isWriting()) {
+        writeDelayed = true;
+
+        stream.endWriteStream();
+    // Initial write of files to dest.
+    } else {
+        writeStartTime = Date.now();
+
+        writeFiles();
+    }
 }
 
 /**
