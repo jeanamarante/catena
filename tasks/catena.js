@@ -1,5 +1,8 @@
 'use strict';
 
+// Array.prototype.flat method does not work in older versions of node.
+require('array-flat-polyfill');
+
 const fs = require('fs');
 const del = require('del');
 const path = require('path');
