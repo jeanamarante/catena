@@ -1,3 +1,4 @@
 node_modules/
 tasks/tmp/
 *.DS_Store
+package-lock.json
