@@ -25,7 +25,8 @@
         "linked-list": "^2.0.0",
 		"js-beautify": "^1.10.0",
 		"signal-exit": "^3.0.0",
-		"recursive-readdir": "^2.2.0",
+        "recursive-readdir": "^2.2.0",
+        "array-flat-polyfill": "^1.0.0",
 		"google-closure-compiler": "20190415.0.0"
 	},
 	"keywords": [
