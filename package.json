@@ -14,9 +14,6 @@
 		"url": "https://github.com/jeanamarante/catena/issues"
 	},
 	"license": "MIT",
-	"engines": {
-		"node": ">=11.8.0"
-	},
 	"dependencies": {
 		"del": "^4.1.0",
 		"uuid": "^3.3.0",
