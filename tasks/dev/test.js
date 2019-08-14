@@ -44,20 +44,13 @@ function buildLintCLI (options) {
     if (!options.lint) { return undefined; }
 
     let cliOptions = {
-        'envs': ['browser', 'node', 'amd', 'es6'],
+        'envs': ['browser', 'node', 'amd', 'es6', 'worker'],
         'globals': options.externs,
         'useEslintrc': false,
         'parserOptions': {
-            'ecmaVersion': 9
-        }
-    };
-
-    // Allow lintConfig to establish which rules are going to be
-    // used if it is declared.
-    if (typeof options.lintConfig === 'string') {
-        cliOptions['configFile'] = options.lintConfig;
-    } else {
-        cliOptions['rules'] = {
+            'ecmaVersion': 10
+        },
+        'rules': {
             // Errors
             'no-cond-assign': 2,
             'no-constant-condition': 2,
@@ -83,8 +76,8 @@ function buildLintCLI (options) {
             // Warnings
             'no-compare-neg-zero': 1,
             'no-extra-boolean-cast': 1
-        };
-    }
+        }
+    };
 
     lintCLI = new eslint.CLIEngine(cliOptions);
 }
