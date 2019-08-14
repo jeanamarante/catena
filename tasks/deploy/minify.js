@@ -43,8 +43,8 @@ function minify (grunt, fileData, options) {
     let compiler = new ClosureCompiler({
         'js': fileData.tmpParse,
         'externs': fileData.tmpExterns,
-        'language_in': 'ECMASCRIPT_2018',
-        'language_out': 'STABLE',
+        'language_in': options.minifyLanguageIn,
+        'language_out': options.minifyLanguageOut,
         'warning_level': 'QUIET',
         'js_output_file': fileData.dest,
         'dependency_mode': 'NONE',

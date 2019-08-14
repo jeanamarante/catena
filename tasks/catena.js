@@ -22,9 +22,10 @@ let asyncDone = null;
 let tmpDir = '';
 
 /**
- * Test if file path declared for option exists and is valid.
+ * Test if file path declared in options exists and if it is valid string.
  *
  * @function testOptionalFile
+ * @param {Object} grunt
  * @param {String} file
  * @param {String} optionName
  * @api private
@@ -41,6 +42,20 @@ function testOptionalFile (grunt, file, optionName) {
         }
     } else {
         throwAsyncError(new Error(`${optionName} must be string.`));
+    }
+}
+
+/**
+ * @function testOptionalNonEmptyString
+ * @param {Object} grunt
+ * @param {String} value
+ * @param {String} optionName
+ * @api private
+ */
+
+function testOptionalNonEmptyString (grunt, value, optionName) {
+    if (typeof value !== 'string' || value === '') {
+        throwAsyncError(new Error(`${optionName} must be non empty string.`));
     }
 }
 
@@ -323,10 +338,16 @@ module.exports = function (grunt) {
             options.license = path.resolve(options.license);
         }
 
-        if (options.lintConfig !== undefined) {
-            testOptionalFile(grunt, options.lintConfig, 'lintConfig');
+        if (options.minifyLanguageIn === undefined) {
+            options.minifyLanguageIn = 'ECMASCRIPT_2019';
+        } else {
+            testOptionalNonEmptyString(grunt, options.minifyLanguageIn, 'minifyLanguageIn');
+        }
 
-            options.lintConfig = path.resolve(options.lintConfig);
+        if (options.minifyLanguageOut === undefined) {
+            options.minifyLanguageOut = 'ECMASCRIPT_2015';
+        } else {
+            testOptionalNonEmptyString(grunt, options.minifyLanguageOut, 'minifyLanguageOut');
         }
 
         for (let i = 0, max = this.files.length; i < max; i++) {

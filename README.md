@@ -98,6 +98,18 @@ Default: `true`
 
 dest file will be minified when deploy is true. If minify is false then dest file will be beautified instead.
 
+__options.minifyLanguageIn__  
+Type: `String`  
+Default: `ECMASCRIPT_2019`
+
+The specification parsed src files should conform to when minifying with [closure compiler](https://github.com/google/closure-compiler/wiki/Flags-and-Options).
+
+__options.minifyLanguageOut__  
+Type: `String`  
+Default: `ECMASCRIPT_2015`
+
+The specification minified dest file should conform to when minifying with [closure compiler](https://github.com/google/closure-compiler/wiki/Flags-and-Options).
+
 __options.license__  
 Type: `String`
 
