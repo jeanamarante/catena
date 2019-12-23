@@ -9,8 +9,9 @@ const nsfw = require('nsfw');
  */
 
 class Watcher {
-    constructor (src, errorCallback) {
+    constructor (src, walk, errorCallback) {
         this._src = src;
+        this._walk = walk;
         this._watcher = null;
         this._storingMatches = false;
         this._throwAsyncError = errorCallback;
@@ -30,6 +31,7 @@ class Watcher {
         this._fileRemoveCallback = null;
         this._fileRenameCallback = null;
         this._fileChangeCallback = null;
+        this._onRecurseModifiedPathWalkFinishBound = this._onRecurseModifiedPathWalkFinish.bind(this);
     }
 
     /**
@@ -221,8 +223,8 @@ class Watcher {
      */
 
     renamePath (oldFile, newFile) {
-        let oldValid = isValidFile(oldFile);
-        let newValid = isValidFile(newFile);
+        let oldValid = this.isValidFile(oldFile);
+        let newValid = this.isValidFile(newFile);
 
         if (!oldValid || !newValid) {
             if (oldValid) {
@@ -390,6 +392,42 @@ class Watcher {
     }
 
     /**
+     * Add paths recursively for file that has just been moved.
+     *
+     * @function recurseModifiedPath
+     * @param {String} file
+     * @api private
+     */
+
+    _recurseModifiedPath (file) {
+        if (fs.existsSync(file)) {
+            if (fs.statSync(file).isDirectory()) {
+                this.addPath(file);
+
+                this._walk.walkDirectory(file, this._onRecurseModifiedPathWalkFinishBound);
+
+            } else if (path.extname(file) === '.js') {
+                this.addPath(file);
+            }
+        }
+    }
+
+    /**
+     * @function onRecurseModifiedPathWalkFinish
+     * @param {Array} matches
+     * @api private
+     */
+
+    _onRecurseModifiedPathWalkFinish (matches) {
+        // Only one directory at a time is walked.
+        matches = matches[0];
+
+        for (let i = 0, max = matches.length; i < max; i++) {
+            this.addPath(matches[i]);
+        }
+    }
+
+    /**
      * @function onEvents
      * @param {Array} events
      * @api private
@@ -418,12 +456,18 @@ class Watcher {
 
                     case Watcher.NSFW_MODIFIED:
                         // Keep track of files that have been changed to prevent
-                        // file change callback from being invoked more than once.
-                        if (this.isStoredFile(file) && !this._modifiedFiles.has(file)) {
-                            this._modifiedFiles.set(file, true);
-
-                            this._fileChangeCallback(this, file);
+                        // file change callback from being invoked more than once
+                        // per file.
+                        if (!this._modifiedFiles.has(file)) {
+                            if (this.isStoredFile(file)) {
+                                // File content has changed.
+                                this._fileChangeCallback(this, file);
+                            } else {
+                                // Directory or file has been moved.
+                                this._recurseModifiedPath(file);
+                            }
                         }
+
                         break;
                 }
             }

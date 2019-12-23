@@ -2,6 +2,7 @@
 
 const LinkedList = require('linked-list');
 
+const walk = require('../util/walk');
 const chalk = require('../util/chalk');
 const stream = require('../util/stream');
 const Watcher = require('./Watcher');
@@ -246,7 +247,8 @@ module.exports = function (grunt, fileData, options, errorCallback, matches, fla
     tmpWrapEnd = grunt.file.read(fileData.tmpWrapEnd);
     dest = fileData.dest;
 
-    stream.setThrowAsyncError(errorCallback);
+    walk.setThrowAsyncError(throwAsyncError);
+    stream.setThrowAsyncError(throwAsyncError);
 
     chalk.init('Watching...\x0A', true);
 
@@ -255,7 +257,7 @@ module.exports = function (grunt, fileData, options, errorCallback, matches, fla
 
     // Create one watcher per src directory.
     for (let i = 0, max = fileData.src.length; i < max; i++) {
-        let watcher = new Watcher(fileData.src[i], throwAsyncError);
+        let watcher = new Watcher(fileData.src[i], walk, throwAsyncError);
 
         watchers.push(watcher);
 
