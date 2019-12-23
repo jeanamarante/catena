@@ -7,8 +7,8 @@ const fs = require('fs');
 const del = require('del');
 const path = require('path');
 const uuid = require('uuid/v4');
-const readDir = require('recursive-readdir');
 
+const walk = require('./util/walk');
 const stream = require('./util/stream');
 
 // Files used for wrapping are stored here.
@@ -235,37 +235,12 @@ function streamWrapperStart (grunt, fileData, options) {
 
 function streamWrapperEnd (grunt, fileData, options) {
     stream.createWriteStream(fileData.tmpWrapEnd, () => {
-        recurseSrcDirectories(grunt, fileData, options);
+        walk.walkDirectories(fileData.src, (matches) => {
+            streamMatches(grunt, fileData, options, matches, matches.flat());
+        });
     });
 
     stream.pipeLastFile(path.join(clientSideDir, 'wrapper-end.js'));
-}
-
-/**
- * Find all Javascript files in src directories.
- *
- * @function recurseSrcDirectories
- * @param {Object} grunt
- * @param {Object} fileData
- * @param {Object} options
- * @api private
- */
-
-function recurseSrcDirectories (grunt, fileData, options) {
-    let promises = [];
-
-    // Ignore everything except directories and Javascript files.
-    // Store function in array for recursive-readdir module.
-    let ignoreCallback = [(file, stats) => !(stats.isDirectory() || path.extname(file) === '.js')];
-
-    for (let i = 0, max = fileData.src.length; i < max; i++) {
-        promises.push(readDir(fileData.src[i], ignoreCallback).then((value) => value, (err) => err));
-    }
-
-    Promise.all(promises)
-        .then((values) => {
-            streamMatches(grunt, fileData, options, values, values.flat());
-        }, throwAsyncError);
 }
 
 /**
@@ -310,6 +285,7 @@ module.exports = function (grunt) {
         // Execute task asynchronously.
         asyncDone = grunt.task.current.async();
 
+        walk.setThrowAsyncError(throwAsyncError);
         stream.setThrowAsyncError(throwAsyncError);
 
         createTmpDir(grunt);
